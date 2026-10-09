@@ -1,1 +1,1429 @@
-# tiagodpesilva-ux.github.io
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tiago 😈 vs Julia 😈 · Termodinâmica dos Afetos</title>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #1e1e2e;
+  --surface: #29283d;
+  --surface-2: #34324b;
+  --text: #f3f0ff;
+  --muted: #c4c0dc;
+  --blue: #89b4fa;
+  --peach: #fab387;
+  --green: #a6e3a1;
+  --pink: #f5c2e7;
+  --yellow: #f9e2af;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  min-height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+}
+
+h1 { font-size: 1.4rem; margin-bottom: 0.5rem; text-align: center; z-index: 10; position: relative; }
+.subtitle { color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem; z-index: 10; position: relative; text-align: center; }
+
+/* ============================================================
+   😈 DEMÔNIOS COLORIDOS — Tiago (azul) vs Julia (rosa)
+   O emoji original é arroxeado; filtros CSS recolorem sem trocar de ícone.
+   ============================================================ */
+.devil-blue {
+  display: inline-block;
+  filter: hue-rotate(200deg) saturate(1.5) brightness(1.2);
+  margin-right: 0.15rem;
+  vertical-align: middle;
+}
+
+.devil-pink {
+  display: inline-block;
+  filter: hue-rotate(320deg) saturate(1.3) brightness(1.25);
+  margin-right: 0.15rem;
+  vertical-align: middle;
+}
+
+.controls {
+  display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center;
+  z-index: 10; position: relative; margin-bottom: 0.5rem; max-width: 900px;
+}
+
+button {
+  background: var(--surface-2); color: var(--text);
+  border: 1px solid var(--surface); border-radius: 8px;
+  padding: 0.6rem 1rem; font-size: 0.9rem; cursor: pointer;
+  transition: all 0.2s ease;
+}
+button:hover:not(:disabled) { background: var(--blue); color: var(--bg); transform: translateY(-2px); }
+button:active:not(:disabled) { transform: translateY(0); }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+#btnOnline {
+  background: linear-gradient(135deg, rgba(137,180,250,0.25), rgba(245,194,231,0.25));
+  border-color: rgba(245,194,231,0.5);
+}
+
+#btnOnlineFixed {
+  position: fixed;
+  top: 5.5rem;
+  right: 1rem;
+  z-index: 50;
+  background: linear-gradient(135deg, #89b4fa, #f5c2e7);
+  color: #1e1e2e;
+  font-weight: 700;
+  padding: 0.75rem 1.2rem;
+  font-size: 0.9rem;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 0 24px rgba(245, 194, 231, 0.6);
+  animation: pulseOnline 2s ease-in-out infinite;
+  font-family: system-ui, -apple-system, sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+#btnOnlineFixed:hover { transform: scale(1.05); }
+#btnOnlineFixed:active { transform: scale(0.98); }
+
+@keyframes pulseOnline {
+  0%, 100% { box-shadow: 0 0 24px rgba(245, 194, 231, 0.6); }
+  50%      { box-shadow: 0 0 42px rgba(137, 180, 250, 0.95); }
+}
+
+#canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: auto; }
+
+.counter {
+  position: fixed; top: 1rem; right: 1rem;
+  background: rgba(41, 40, 61, 0.9); color: var(--muted);
+  font-size: 0.8rem; padding: 0.4rem 0.8rem; border-radius: 8px;
+  z-index: 10; backdrop-filter: blur(6px); font-variant-numeric: tabular-nums;
+}
+
+.status-pill {
+  position: fixed; top: 3.1rem; right: 1rem;
+  background: rgba(41, 40, 61, 0.9); color: var(--muted);
+  font-size: 0.72rem; padding: 0.3rem 0.7rem; border-radius: 20px;
+  z-index: 10; backdrop-filter: blur(6px);
+  display: none; align-items: center; gap: 0.4rem;
+}
+.status-pill.show { display: flex; }
+.status-pill .dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--yellow);
+  animation: pulse 1.2s infinite ease-in-out;
+}
+.status-pill.online .dot { background: var(--green); animation: none; box-shadow: 0 0 10px var(--green); }
+.status-pill.offline .dot { background: #f38ba8; animation: none; }
+
+@keyframes pulse { 0%,100%{opacity:0.4;} 50%{opacity:1;} }
+
+.duel-hud {
+  position: fixed; bottom: 1rem; left: 1rem; right: 1rem;
+  display: flex; justify-content: space-between; gap: 1rem;
+  z-index: 10; pointer-events: none;
+}
+
+.duel-panel {
+  padding: 0.7rem 1.1rem; border-radius: 14px;
+  backdrop-filter: blur(10px); pointer-events: auto;
+  transition: transform 0.18s ease, box-shadow 0.3s ease;
+  min-width: 156px;
+}
+.duel-panel.blue-side {
+  background: rgba(137, 180, 250, 0.15);
+  border: 1px solid rgba(137, 180, 250, 0.45);
+}
+.duel-panel.pink-side {
+  background: rgba(245, 194, 231, 0.15);
+  border: 1px solid rgba(245, 194, 231, 0.45);
+  text-align: right;
+}
+.duel-panel.pop-blue { transform: scale(1.1); box-shadow: 0 0 28px rgba(137, 180, 250, 0.8); }
+.duel-panel.pop-pink { transform: scale(1.1); box-shadow: 0 0 28px rgba(245, 194, 231, 0.8); }
+
+.duel-panel .name { font-size: 0.78rem; font-weight: 700; color: var(--text); letter-spacing: 0.06em; }
+.duel-panel .score { font-size: 1.7rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.blue-side .score { color: var(--blue); }
+.pink-side .score { color: var(--pink); }
+.duel-panel .rule { font-size: 0.65rem; color: var(--muted); margin-top: 0.15rem; opacity: 0.85; line-height: 1.3; }
+
+.modal {
+  position: fixed; inset: 0; background: rgba(10, 10, 20, 0.75);
+  display: none; align-items: center; justify-content: center;
+  z-index: 100; padding: 1rem; backdrop-filter: blur(4px);
+}
+.modal.open { display: flex; animation: fadeIn 0.25s ease; }
+@keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+
+.modal-content {
+  background: var(--surface); border: 1px solid var(--surface-2);
+  border-radius: 16px; padding: 1.5rem;
+  max-width: 520px; width: 100%; max-height: 85vh; overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); animation: slideUp 0.3s ease;
+}
+@keyframes slideUp { from{transform:translateY(20px);opacity:0;} to{transform:translateY(0);opacity:1;} }
+
+.modal-content h2 { font-size: 1.2rem; margin-bottom: 1rem; text-align: center; }
+
+.modal-close {
+  position: absolute; top: 1rem; right: 1rem; background: transparent; border: none;
+  color: var(--muted); font-size: 1.5rem; cursor: pointer;
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+.modal-close:hover { background: var(--surface-2); color: var(--text); transform: none; }
+
+.wish-list { display: flex; flex-direction: column; gap: 0.6rem; margin: 1rem 0; }
+.wish {
+  background: var(--surface-2); border: 1px solid transparent;
+  border-radius: 12px; padding: 0.9rem 1rem;
+  text-align: left; font-size: 0.95rem; line-height: 1.4;
+  cursor: pointer; transition: all 0.2s ease;
+  display: flex; align-items: center; gap: 0.6rem;
+}
+.wish:hover { border-color: var(--blue); transform: translateX(4px); }
+.wish.selected { border-color: var(--green); background: rgba(166, 227, 161, 0.1); }
+.wish.selected::after { content: '✦'; margin-left: auto; color: var(--green); font-size: 1.2rem; }
+
+.wish-reveal {
+  background: rgba(137, 180, 250, 0.1); border: 1px dashed var(--blue);
+  border-radius: 12px; padding: 1rem; margin-top: 1rem;
+  text-align: center; color: var(--text); font-size: 0.95rem; display: none;
+}
+.wish-reveal.show { display: block; animation: fadeIn 0.4s ease; }
+
+#starModal .modal-content { max-width: 560px; text-align: center; }
+.star-stage {
+  position: relative; width: 100%; height: 320px;
+  background: radial-gradient(ellipse at center, #0b0b1f 0%, #05050f 100%);
+  border-radius: 12px; overflow: hidden; margin: 1rem 0;
+}
+.star-stage canvas { display: block; width: 100%; height: 100%; }
+
+.star-name {
+  font-size: 2rem; font-weight: 600;
+  background: linear-gradient(135deg, #a5f3fc, #c4b5fd, #f5c2e7);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-top: 0.5rem; letter-spacing: 0.05em;
+}
+.star-info { color: var(--muted); font-size: 0.9rem; line-height: 1.6; margin-top: 0.75rem; text-align: left; }
+.star-info em { color: var(--yellow); font-style: normal; }
+.star-meaning {
+  margin-top: 1rem; padding: 1rem;
+  background: rgba(245, 194, 231, 0.08);
+  border-left: 3px solid var(--pink); border-radius: 8px;
+  text-align: left; font-size: 0.9rem; line-height: 1.6; color: var(--text);
+}
+
+.lab-panel {
+  position: fixed; top: 1rem; left: 1rem; z-index: 20; width: 252px;
+  background: rgba(41, 40, 61, 0.92); border: 1px solid var(--surface-2);
+  border-radius: 14px; backdrop-filter: blur(10px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  font-size: 0.82rem; overflow: hidden; transition: max-height 0.3s ease;
+}
+.lab-panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.65rem 0.9rem; background: rgba(52, 50, 75, 0.65);
+  border-bottom: 1px solid var(--surface-2); font-weight: 600; font-size: 0.82rem;
+}
+.lab-toggle {
+  background: transparent; border: none; color: var(--muted); font-size: 1.15rem;
+  width: 24px; height: 24px; line-height: 1; padding: 0; cursor: pointer; border-radius: 6px;
+}
+.lab-toggle:hover { background: var(--surface-2); color: var(--text); transform: none; }
+.lab-panel.collapsed .lab-body { display: none; }
+.lab-body { padding: 0.9rem; display: flex; flex-direction: column; gap: 1rem; }
+.lab-block { display: flex; flex-direction: column; gap: 0.45rem; }
+.lab-label { display: flex; justify-content: space-between; align-items: baseline; color: var(--text); font-size: 0.82rem; }
+.lab-value { color: var(--blue); font-variant-numeric: tabular-nums; font-weight: 600; transition: color 0.2s ease; }
+
+.lab-slider {
+  width: 100%; -webkit-appearance: none; appearance: none;
+  height: 6px; border-radius: 3px; outline: none; cursor: pointer;
+  background: linear-gradient(90deg, #89b4fa, #f9e2af, #fab387, #f38ba8);
+}
+.lab-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 16px; height: 16px; border-radius: 50%; background: #fff;
+  border: 2px solid var(--blue); box-shadow: 0 0 8px rgba(137, 180, 250, 0.8); cursor: pointer;
+}
+.lab-slider::-moz-range-thumb {
+  width: 16px; height: 16px; border-radius: 50%; background: #fff;
+  border: 2px solid var(--blue); box-shadow: 0 0 8px rgba(137, 180, 250, 0.8); cursor: pointer;
+}
+.lab-scale { display: flex; justify-content: space-between; color: var(--muted); font-size: 0.68rem; opacity: 0.8; }
+
+.entropy-bar { width: 100%; height: 8px; border-radius: 4px; background: rgba(0,0,0,0.35); overflow: hidden; position: relative; }
+.entropy-fill {
+  height: 100%; width: 0%; border-radius: 4px;
+  background: linear-gradient(90deg, #a6e3a1, #f9e2af, #fab387, #f38ba8);
+  transition: width 0.2s ease; box-shadow: 0 0 10px rgba(249, 226, 175, 0.5);
+}
+.lab-state { color: var(--muted); font-size: 0.74rem; font-style: italic; }
+.lab-formula { color: var(--muted); font-size: 0.7rem; text-align: center; opacity: 0.7; font-family: ui-monospace, monospace; }
+.lab-btn {
+  background: var(--surface-2); color: var(--text);
+  border: 1px solid var(--surface); border-radius: 8px;
+  padding: 0.5rem 0.8rem; font-size: 0.78rem; cursor: pointer;
+  transition: all 0.2s ease; width: 100%;
+}
+.lab-btn:hover { background: var(--green); color: var(--bg); transform: translateY(-1px); }
+.lab-value.pop { animation: popScale 0.45s ease; }
+@keyframes popScale {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.45); color: var(--yellow); }
+  100% { transform: scale(1); }
+}
+
+.creative-card { background: var(--surface-2); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; border-left: 3px solid var(--blue); }
+.creative-card:nth-child(2) { border-left-color: var(--pink); }
+.card-head { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem; }
+.card-icon { font-size: 1.4rem; }
+.card-title { font-weight: 600; font-size: 1rem; }
+.card-desc { color: var(--muted); font-size: 0.8rem; margin-bottom: 0.7rem; }
+.card-quote {
+  font-style: italic; color: var(--text);
+  background: rgba(137, 180, 250, 0.08); border-radius: 8px;
+  padding: 0.7rem 0.9rem; margin-bottom: 0.8rem;
+  font-size: 0.9rem; line-height: 1.5; min-height: 3em; transition: background 0.3s ease;
+}
+.card-quote.flash { animation: quoteFlash 0.55s ease; }
+@keyframes quoteFlash {
+  0%   { background: rgba(137, 180, 250, 0.35); }
+  100% { background: rgba(137, 180, 250, 0.08); }
+}
+
+.share-box {
+  background: rgba(137, 180, 250, 0.08);
+  border: 1px dashed var(--blue);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+.share-box label {
+  display: block; color: var(--muted); font-size: 0.8rem;
+  margin-bottom: 0.5rem; text-align: left;
+}
+.share-url {
+  width: 100%; padding: 0.7rem; border-radius: 8px;
+  border: 1px solid var(--surface-2); background: var(--surface-2);
+  color: var(--text); font-size: 0.75rem; text-align: center;
+  font-family: ui-monospace, monospace;
+  margin-bottom: 0.6rem; cursor: text;
+}
+.share-url:focus { outline: none; border-color: var(--blue); }
+
+.status-line {
+  display: flex; align-items: center; justify-content: center;
+  gap: 0.5rem; color: var(--muted); font-size: 0.85rem;
+  padding: 0.8rem; margin: 0.5rem 0;
+}
+.status-line .dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--yellow); animation: pulse 1.2s infinite;
+}
+.status-line.ready .dot { background: var(--green); animation: none; box-shadow: 0 0 12px var(--green); }
+.status-line.error .dot { background: #f38ba8; animation: none; }
+
+@media (max-width: 640px) {
+  h1 { font-size: 1.05rem; }
+  .subtitle { font-size: 0.72rem; }
+  button { padding: 0.45rem 0.7rem; font-size: 0.75rem; }
+  .counter { font-size: 0.68rem; padding: 0.3rem 0.6rem; }
+  .status-pill { font-size: 0.65rem; top: 2.8rem; padding: 0.25rem 0.55rem; }
+  #btnOnlineFixed { top: 4.9rem; padding: 0.55rem 0.85rem; font-size: 0.78rem; }
+
+  .duel-hud { bottom: auto; top: 6.5rem; padding: 0 0.5rem; }
+  .duel-panel { min-width: 0; padding: 0.45rem 0.65rem; border-radius: 10px; }
+  .duel-panel .score { font-size: 1.25rem; }
+  .duel-panel .name { font-size: 0.68rem; }
+  .duel-panel .rule { font-size: 0.55rem; }
+
+  .lab-panel {
+    top: auto; bottom: 1rem; left: 1rem; right: 1rem; width: auto;
+    max-height: 50vh; overflow-y: auto;
+  }
+  .lab-panel.collapsed { max-height: 42px; overflow: hidden; }
+}
+</style>
+</head>
+<body>
+
+<h1>Tiago <span class="devil-blue">😈</span> vs Julia <span class="devil-pink">😈</span></h1>
+<p class="subtitle">Dois domínios, duas cores, uma disputa cósmica ✨</p>
+
+<div class="controls">
+  <button id="btnOnline">🌐 Jogar Online (2 celulares)</button>
+  <button id="btnRain">🌧️ Chuva de partículas</button>
+  <button id="btnClear">🧹 Limpar tudo</button>
+  <button id="btnWishes">💫 Laboratório dos Desejos</button>
+  <button id="btnStar">⭐ Ver estrela</button>
+  <button id="btnExperiments">🧪 Experimentos criativos</button>
+</div>
+
+<!-- Botão flutuante de emergência, sempre visível -->
+<button id="btnOnlineFixed" title="Jogar em dois aparelhos">🌐 Jogar Online</button>
+
+<canvas id="canvas"></canvas>
+<div class="counter" id="counter">💙 0 · 💗 0</div>
+<div class="status-pill" id="statusPill"><span class="dot"></span><span id="statusText">—</span></div>
+
+<div class="duel-hud" id="duelHud">
+  <div class="duel-panel blue-side" id="myPanel">
+    <div class="name" id="blueName"><span class="devil-blue">😈</span> TIAGO</div>
+    <div class="score" id="myScore">0</div>
+    <div class="rule" id="blueRule">💙 coleta · 💔 aniquila rosa</div>
+  </div>
+  <div class="duel-panel pink-side" id="herPanel">
+    <div class="name" id="pinkName">JULIA <span class="devil-pink">😈</span></div>
+    <div class="score" id="herScore">0</div>
+    <div class="rule" id="pinkRule">💗 coleta · 💔 aniquila azul</div>
+  </div>
+</div>
+
+<aside class="lab-panel" id="labPanel">
+  <div class="lab-panel-header">
+    <span>🔬 Painel do Laboratório</span>
+    <button class="lab-toggle" id="labToggle" aria-label="Recolher painel">−</button>
+  </div>
+  <div class="lab-body">
+    <div class="lab-block">
+      <div class="lab-label"><span>🌡️ Temperatura</span><span class="lab-value" id="tempValue">300 K</span></div>
+      <input type="range" id="tempSlider" min="1" max="1000" value="300" class="lab-slider">
+      <div class="lab-scale"><span>1 K</span><span>1000 K</span></div>
+    </div>
+    <div class="lab-block">
+      <div class="lab-label"><span>🌀 Entropia S</span><span class="lab-value" id="entropyValue">0.000</span></div>
+      <div class="entropy-bar"><div class="entropy-fill" id="entropyFill"></div></div>
+      <div class="lab-state" id="entropyState">—</div>
+      <div class="lab-formula">S = −k<sub>B</sub> Σ p<sub>i</sub> ln p<sub>i</sub></div>
+    </div>
+    <div class="lab-block">
+      <div class="lab-label"><span>📈 Caos controlado</span><span class="lab-value" id="chaosValue">0</span></div>
+      <div class="lab-state" id="chaosState">Nenhum experimento ainda</div>
+      <button id="btnRegister" class="lab-btn">Registrar mais um ↗</button>
+    </div>
+  </div>
+</aside>
+
+<div class="modal" id="onlineModal">
+  <div class="modal-content" style="position: relative; text-align: center;">
+    <button class="modal-close" data-close="onlineModal">✕</button>
+    <h2>🌐 Jogar Online (2 aparelhos)</h2>
+    <div class="status-line" id="onlineStatusLine">
+      <span class="dot"></span>
+      <span id="onlineStatusText">Preparando sala...</span>
+    </div>
+    <div class="share-box" id="shareBox" style="display:none;">
+      <label for="shareURL">📤 Envie este link para a Julia abrir:</label>
+      <input class="share-url" id="shareURL" readonly>
+      <button class="lab-btn" id="btnCopyURL">📋 Copiar link</button>
+    </div>
+    <p style="color: var(--muted); font-size: 0.78rem; margin-top: 1rem; line-height: 1.5;">
+      Tiago joga na metade <strong style="color:var(--blue)">azul</strong> (esquerda) e
+      Julia na metade <strong style="color:var(--pink)">rosa</strong> (direita).
+    </p>
+  </div>
+</div>
+
+<div class="modal" id="wishModal">
+  <div class="modal-content" style="position: relative;">
+    <button class="modal-close" data-close="wishModal">✕</button>
+    <h2>💫 Laboratório dos Desejos</h2>
+    <p style="color: var(--muted); font-size: 0.9rem; text-align: center;">
+      Escolha um desejo para materializar. Cada escolha é única e irreversível... por enquanto.
+    </p>
+    <div class="wish-list" id="wishList"></div>
+    <div class="wish-reveal" id="wishReveal"></div>
+  </div>
+</div>
+
+<div class="modal" id="starModal">
+  <div class="modal-content" style="position: relative;">
+    <button class="modal-close" data-close="starModal">✕</button>
+    <h2>⭐ A Estrela</h2>
+    <div class="star-stage"><canvas id="starCanvas"></canvas></div>
+    <div class="star-name">VEGA · α Lyrae</div>
+    <div class="star-info">
+      <p><em>Constelação:</em> Lyra (a Lira)</p>
+      <p><em>Distância:</em> ~25 anos-luz da Terra</p>
+      <p><em>Magnitude aparente:</em> +0,03 (a 5ª estrela mais brilhante do céu noturno)</p>
+      <p><em>Tipo espectral:</em> A0V — uma estrela branco-azulada</p>
+    </div>
+    <div class="star-meaning">
+      Vega é uma das estrelas mais estudadas da astronomia — foi a primeira estrela
+      fotografada (1850) e serviu como referência de magnitude zero. Junto com Altair
+      e Deneb, forma o <em>Triângulo de Verão</em>. Há cerca de 12.000 anos, foi a
+      Estrela Polar, e voltará a ser daqui a outros 12.000. Uma estrela-guia,
+      constante e luminosa, que sempre aponta o caminho de volta.
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="oracleModal">
+  <div class="modal-content" style="position: relative; max-width: 560px;">
+    <button class="modal-close" data-close="oracleModal">✕</button>
+    <h2>🧪 Experimentos Criativos</h2>
+    <div class="creative-card">
+      <div class="card-head"><span class="card-icon">🔭</span><span class="card-title">Oráculo quântico</span></div>
+      <p class="card-desc">Uma hipótese carinhosa para o próximo experimento:</p>
+      <p class="card-quote" id="oracleQuote">“Algumas coincidências parecem ter sido calculadas com cuidado.”</p>
+      <button class="lab-btn" id="btnOracle">Gerar nova hipótese ↗</button>
+    </div>
+    <div class="creative-card">
+      <div class="card-head"><span class="card-icon">💌</span><span class="card-title">Gerador de elogios improváveis</span></div>
+      <p class="card-desc">Para quando faltarem palavras, mas não motivos.</p>
+      <p class="card-quote" id="complimentQuote">“Sua presença altera as condições de contorno de qualquer dia ruim.”</p>
+      <button class="lab-btn" id="btnCompliment">Medir fofura ↗</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="winModal">
+  <div class="modal-content" style="position: relative; text-align: center;">
+    <h2 id="winTitle">🏆 Vitória!</h2>
+    <p id="winMessage" style="color: var(--muted); margin: 1rem 0; font-size: 1rem; line-height: 1.6;"></p>
+    <button class="lab-btn" id="btnRestart" style="max-width: 220px; margin: 0 auto;">🔄 Jogar de novo</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   CANVAS
+   ============================================================ */
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let W = 0, H = 0;
+let dpr = window.devicePixelRatio || 1;
+
+function resize() {
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', resize);
+resize();
+
+/* ============================================================
+   CONSTANTES DO DUELO
+   ============================================================ */
+const BLUE = '#89b4fa';
+const PINK = '#f5c2e7';
+const MAX_PARTICLES = 1500;
+const WIN_SCORE = 25;
+
+let myScore = 0;
+let herScore = 0;
+let myAnnihilations = 0;
+let herAnnihilations = 0;
+let gameOver = false;
+
+const myScoreEl = document.getElementById('myScore');
+const herScoreEl = document.getElementById('herScore');
+const myPanelEl = document.getElementById('myPanel');
+const herPanelEl = document.getElementById('herPanel');
+
+function updateDuelHUD() {
+  myScoreEl.textContent = myScore;
+  herScoreEl.textContent = herScore;
+}
+
+function popPanel(which) {
+  const el = which === 'blue' ? myPanelEl : herPanelEl;
+  el.classList.remove('pop-blue', 'pop-pink');
+  void el.offsetWidth;
+  el.classList.add(which === 'blue' ? 'pop-blue' : 'pop-pink');
+  setTimeout(() => el.classList.remove('pop-blue', 'pop-pink'), 180);
+}
+
+function checkWin() {
+  if (gameOver) return;
+  if (myScore >= WIN_SCORE || herScore >= WIN_SCORE) {
+    gameOver = true;
+    const iWon = myScore >= WIN_SCORE;
+    document.getElementById('winTitle').textContent = iWon
+      ? '🏆 TIAGO VENCEU!' : '🏆 JULIA VENCEU!';
+    document.getElementById('winMessage').innerHTML = iWon
+      ? `Tiago coletou <strong style="color:var(--blue)">${myScore}</strong> azuis<br>e aniquilou <strong style="color:var(--pink)">${myAnnihilations}</strong> rosas.`
+      : `Julia coletou <strong style="color:var(--pink)">${herScore}</strong> rosas<br>e aniquilou <strong style="color:var(--blue)">${herAnnihilations}</strong> azuis.`;
+    openModal('winModal');
+  }
+}
+
+document.getElementById('btnRestart').addEventListener('click', () => {
+  particles.length = 0;
+  myScore = 0; herScore = 0;
+  myAnnihilations = 0; herAnnihilations = 0;
+  gameOver = false;
+  updateDuelHUD();
+  updateCounter();
+  closeModal('winModal');
+  if (myRole === 'host' || myRole === 'solo') createRain(80);
+});
+
+/* ============================================================
+   LABORATÓRIO
+   ============================================================ */
+const BASE_TEMPERATURE = 300;
+let systemTemperature = BASE_TEMPERATURE;
+let experimentsCount = 0;
+let currentEntropy = 0;
+function speedScale() { return Math.sqrt(systemTemperature / BASE_TEMPERATURE); }
+
+/* ============================================================
+   PARTÍCULA
+   ============================================================ */
+class Particle {
+  constructor(x, y, opts = {}) {
+    this.x = x;
+    this.y = y;
+    const angle = opts.angle !== undefined ? opts.angle : Math.random() * Math.PI * 2;
+    const speed = (opts.speed !== undefined ? opts.speed : 0.5 + Math.random() * 1.5) * speedScale();
+    this.vx = Math.cos(angle) * speed;
+    this.vy = Math.sin(angle) * speed;
+    this.r = opts.r !== undefined ? opts.r : 2 + Math.random() * 4;
+    this.color = opts.color || (Math.random() < 0.5 ? BLUE : PINK);
+    this.gravity = opts.gravity !== undefined ? opts.gravity : 0;
+    this.dead = false;
+  }
+  update(dt) {
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+    if (this.gravity) this.vy += this.gravity * dt;
+    if (this.x < this.r) { this.x = this.r; this.vx = Math.abs(this.vx); }
+    else if (this.x > W - this.r) { this.x = W - this.r; this.vx = -Math.abs(this.vx); }
+    if (this.y < this.r) { this.y = this.r; this.vy = Math.abs(this.vy); }
+    else if (this.y > H - this.r && !this.gravity) { this.y = H - this.r; this.vy = -Math.abs(this.vy); }
+  }
+  draw(ctx) {
+    const speed = Math.hypot(this.vx, this.vy);
+    const glow = Math.min(speed * 2, 18);
+    ctx.save();
+    ctx.shadowBlur = glow;
+    ctx.shadowColor = this.color;
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+const particles = [];
+const counterEl = document.getElementById('counter');
+
+function countColors() {
+  let b = 0, p = 0;
+  for (const part of particles) { if (part.color === BLUE) b++; else p++; }
+  return { b, p };
+}
+function updateCounter() {
+  const { b, p } = countColors();
+  counterEl.textContent = `💙 ${b} · 💗 ${p}`;
+}
+
+/* ============================================================
+   EFEITOS
+   ============================================================ */
+const effects = [];
+function spawnRipple(x, y, color, maxR = 34, width = 2) {
+  effects.push({ type: 'ripple', x, y, r: 0, maxR, width, color, alpha: 1 });
+}
+function spawnFloatText(x, y, text, color) {
+  effects.push({ type: 'text', x, y, text, color, life: 1, vy: -0.9 });
+}
+function updateEffects() {
+  for (let i = effects.length - 1; i >= 0; i--) {
+    const e = effects[i];
+    if (e.type === 'ripple') {
+      e.r += 1.9; e.alpha -= 0.045;
+      if (e.alpha <= 0 || e.r > e.maxR) { effects.splice(i, 1); continue; }
+      ctx.save();
+      ctx.globalAlpha = Math.max(e.alpha, 0);
+      ctx.strokeStyle = e.color; ctx.lineWidth = e.width;
+      ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
+    } else if (e.type === 'text') {
+      e.y += e.vy; e.life -= 0.018;
+      if (e.life <= 0) { effects.splice(i, 1); continue; }
+      ctx.save();
+      ctx.globalAlpha = Math.max(e.life, 0);
+      ctx.fillStyle = e.color;
+      ctx.font = 'bold 18px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.shadowBlur = 12; ctx.shadowColor = e.color;
+      ctx.fillText(e.text, e.x, e.y);
+      ctx.restore();
+    }
+  }
+}
+
+/* ============================================================
+   ANIQUILAÇÃO POR COLISÃO
+   ============================================================ */
+const ANNIHILATION_CELL = 24;
+function resolveAnnihilations() {
+  const n = particles.length;
+  if (n < 2) return;
+  const grid = new Map();
+  for (let i = 0; i < n; i++) {
+    const p = particles[i];
+    const key = Math.floor(p.x / ANNIHILATION_CELL) + ':' + Math.floor(p.y / ANNIHILATION_CELL);
+    const bucket = grid.get(key);
+    if (bucket) bucket.push(i); else grid.set(key, [i]);
+  }
+  let anyDead = false;
+  for (let i = 0; i < n; i++) {
+    const p = particles[i];
+    if (p.dead) continue;
+    const cx = Math.floor(p.x / ANNIHILATION_CELL);
+    const cy = Math.floor(p.y / ANNIHILATION_CELL);
+    for (let dx = -1; dx <= 1 && !p.dead; dx++) {
+      for (let dy = -1; dy <= 1 && !p.dead; dy++) {
+        const bucket = grid.get((cx + dx) + ':' + (cy + dy));
+        if (!bucket) continue;
+        for (let k = 0; k < bucket.length; k++) {
+          const j = bucket[k];
+          if (j <= i) continue;
+          const q = particles[j];
+          if (q.dead || q.color !== p.color) continue;
+          const ddx = p.x - q.x, ddy = p.y - q.y;
+          const rr = p.r + q.r;
+          if (ddx * ddx + ddy * ddy <= rr * rr) {
+            p.dead = true; q.dead = true; anyDead = true;
+            const mx = (p.x + q.x) * 0.5, my = (p.y + q.y) * 0.5;
+            spawnRipple(mx, my, p.color, 40, 2.5);
+            spawnRipple(mx, my, '#ffffff', 22, 1.5);
+            break;
+          }
+        }
+      }
+    }
+  }
+  if (anyDead) {
+    for (let i = particles.length - 1; i >= 0; i--) {
+      if (particles[i].dead) particles.splice(i, 1);
+    }
+    updateCounter();
+  }
+}
+
+/* ============================================================
+   CRIAÇÃO DE PARTÍCULAS
+   ============================================================ */
+function createRain(count = 120) {
+  const available = MAX_PARTICLES - particles.length;
+  const n = Math.min(count, available);
+  for (let i = 0; i < n; i++) {
+    const x = Math.random() * W;
+    const y = -Math.random() * H * 0.3;
+    const angle = Math.PI / 2 + (Math.random() - 0.5) * 0.3;
+    const speed = 2 + Math.random() * 4;
+    particles.push(new Particle(x, y, {
+      angle, speed, r: 1.5 + Math.random() * 3, gravity: 0.05,
+      color: Math.random() < 0.5 ? BLUE : PINK,
+    }));
+  }
+  updateCounter();
+}
+
+function createBurst(x, y, count = 10) {
+  const available = MAX_PARTICLES - particles.length;
+  const n = Math.min(count, available);
+  for (let i = 0; i < n; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 1 + Math.random() * 3;
+    particles.push(new Particle(x, y, {
+      angle, speed, r: 2 + Math.random() * 3,
+      color: Math.random() < 0.5 ? BLUE : PINK,
+    }));
+  }
+  updateCounter();
+}
+
+/* ============================================================
+   MULTIPLAYER (PeerJS)
+   ============================================================ */
+let peer = null;
+let conn = null;
+let isOnline = false;
+let myRole = 'solo';
+let broadcastAcc = 0;
+
+const statusPill = document.getElementById('statusPill');
+const statusText = document.getElementById('statusText');
+
+function setStatus(text, kind) {
+  statusPill.classList.remove('online', 'offline');
+  if (kind === 'online') statusPill.classList.add('online');
+  if (kind === 'offline') statusPill.classList.add('offline');
+  statusText.textContent = text;
+  statusPill.classList.add('show');
+}
+
+/* --- Rótulos dos painéis por papel ---
+   Tiago é SEMPRE o azul (esquerda). Julia é SEMPRE a rosa (direita).
+   Só muda quem está na frente de cada tela. */
+function updateDuelLabels() {
+  const blueName = document.getElementById('blueName');
+  const pinkName = document.getElementById('pinkName');
+
+  if (myRole === 'guest') {
+    // Esta tela é da Julia — ela vê "JULIA 😈" no painel rosa (direita)
+    blueName.innerHTML = '<span class="devil-blue">😈</span> TIAGO';
+    pinkName.innerHTML = 'JULIA <span class="devil-pink">😈</span> (você)';
+  } else {
+    // Tela do Tiago
+    blueName.innerHTML = '<span class="devil-blue">😈</span> TIAGO (você)';
+    pinkName.innerHTML = 'JULIA <span class="devil-pink">😈</span>';
+  }
+}
+
+/* --- Aplicação de um clique --- */
+function applyPlayerClick(mx, my, player, fromRemote) {
+  if (gameOver) return;
+
+  const inOwnDomain = (player === 'blue') ? (mx < W / 2) : (mx > W / 2);
+  if (!inOwnDomain) {
+    if (!fromRemote) spawnRipple(mx, my, '#ffffff', 20, 1);
+    return;
+  }
+
+  let collected = 0, annihilated = 0;
+
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    const dx = p.x - mx, dy = p.y - my;
+    const reach = p.r + 12;
+    if (dx * dx + dy * dy > reach * reach) continue;
+
+    const isCollectable = (player === 'blue') ? (p.color === BLUE) : (p.color === PINK);
+
+    if (isCollectable) {
+      collected++;
+      spawnRipple(p.x, p.y, p.color, 32, 2.2);
+      spawnRipple(p.x, p.y, '#ffffff', 20, 1.4);
+    } else {
+      annihilated++;
+      spawnRipple(p.x, p.y, '#ffffff', 44, 3);
+      spawnRipple(p.x, p.y, p.color, 30, 2);
+    }
+    particles.splice(i, 1);
+  }
+
+  if (collected > 0 || annihilated > 0) {
+    if (player === 'blue') {
+      myScore += collected;
+      myAnnihilations += annihilated;
+      if (collected > 0) { spawnFloatText(mx, my - 20, '+' + collected, BLUE); popPanel('blue'); }
+      if (annihilated > 0) spawnFloatText(mx, my + 4, '💔 ' + annihilated, PINK);
+    } else {
+      herScore += collected;
+      herAnnihilations += annihilated;
+      if (collected > 0) { spawnFloatText(mx, my - 20, '+' + collected, PINK); popPanel('pink'); }
+      if (annihilated > 0) spawnFloatText(mx, my + 4, '💔 ' + annihilated, BLUE);
+    }
+    updateDuelHUD();
+    updateCounter();
+    checkWin();
+  } else if (!fromRemote) {
+    createBurst(mx, my, 8);
+  }
+}
+
+/* --- Cliques locais --- */
+canvas.addEventListener('pointerdown', (e) => {
+  if (gameOver) return;
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  if (myRole === 'solo') {
+    applyPlayerClick(mx, my, mx < W / 2 ? 'blue' : 'pink', false);
+    return;
+  }
+
+  if (myRole === 'host') {
+    // Host é SEMPRE o Tiago (azul). Só age no domínio esquerdo.
+    applyPlayerClick(mx, my, 'blue', false);
+    return;
+  }
+
+  // Guest é SEMPRE a Julia (rosa). Aplica localmente + envia pro host.
+  applyPlayerClick(mx, my, 'pink', false);
+  if (conn && conn.open) {
+    conn.send({ type: 'click', x: mx / W, y: my / H });
+  }
+});
+
+/* --- Broadcast host → guest --- */
+function broadcastState() {
+  if (!conn || !conn.open) return;
+  const payload = {
+    type: 'state',
+    ps: particles.map(p => [
+      Math.round(p.x / W * 1000) / 1000,
+      Math.round(p.y / H * 1000) / 1000,
+      Math.round(p.r * 10) / 10,
+      p.color === BLUE ? 0 : 1,
+    ]),
+    s: [myScore, herScore, myAnnihilations, herAnnihilations],
+  };
+  conn.send(payload);
+}
+
+function applyRemoteState(data) {
+  particles.length = 0;
+  for (const [x, y, r, c] of data.ps) {
+    const np = new Particle(x * W, y * H, { r });
+    np.color = c === 0 ? BLUE : PINK;
+    np.vx = 0; np.vy = 0;
+    particles.push(np);
+  }
+  [myScore, herScore, myAnnihilations, herAnnihilations] = data.s;
+  updateDuelHUD();
+  updateCounter();
+}
+
+function setupConn() {
+  conn.on('open', () => {
+    setStatus('Conectada! Boa sorte, Julia 💜', 'online');
+    if (myRole === 'guest') conn.send({ type: 'hello' });
+    if (myRole === 'host' && particles.length < 40) createRain(80);
+  });
+
+  conn.on('data', (data) => {
+    if (myRole === 'host') {
+      if (data.type === 'click') applyPlayerClick(data.x * W, data.y * H, 'pink', true);
+    } else {
+      if (data.type === 'state') applyRemoteState(data);
+    }
+  });
+
+  conn.on('close', () => {
+    setStatus('Conexão perdida 💔', 'offline');
+    if (myRole === 'guest') { particles.length = 0; updateCounter(); }
+  });
+
+  conn.on('error', () => setStatus('Erro na conexão', 'offline'));
+}
+
+function startHosting(sala) {
+  myRole = 'host';
+  isOnline = true;
+  updateDuelLabels();
+  setStatus('Aguardando Julia entrar...', 'waiting');
+
+  peer = new Peer(sala);
+  peer.on('open', () => setStatus('Sala pronta. Compartilhe o link!', 'waiting'));
+  peer.on('connection', (c) => {
+    if (conn) { c.close(); return; }
+    conn = c;
+    setupConn();
+  });
+  peer.on('error', (err) => {
+    console.error(err);
+    setStatus('Erro: ' + err.type, 'offline');
+    document.getElementById('onlineStatusLine').classList.add('error');
+    document.getElementById('onlineStatusText').textContent = 'Erro: ' + err.type;
+  });
+}
+
+function startGuesting(sala) {
+  myRole = 'guest';
+  isOnline = true;
+  updateDuelLabels();
+  setStatus('Conectando à sala do Tiago...', 'waiting');
+  particles.length = 0;
+  updateCounter();
+
+  peer = new Peer();
+  peer.on('open', () => {
+    conn = peer.connect(sala);
+    setupConn();
+  });
+  peer.on('error', (err) => {
+    console.error(err);
+    setStatus('Não consegui conectar 😢', 'offline');
+  });
+}
+
+/* --- Abre modal Jogar Online --- */
+function openOnlineModal() {
+  if (isOnline) {
+    openModal('onlineModal');
+    document.getElementById('shareBox').style.display = 'block';
+    document.getElementById('shareURL').value = location.href;
+    document.getElementById('onlineStatusLine').classList.add('ready');
+    document.getElementById('onlineStatusText').textContent =
+      myRole === 'host' ? 'Sala ativa — compartilhe o link com a Julia!' : 'Você é a convidada 💗';
+    return;
+  }
+
+  const sala = 'termo-' + Math.random().toString(36).slice(2, 8);
+  localStorage.setItem('termo-host-' + sala, '1');
+  history.replaceState(null, '', '#sala=' + sala);
+
+  document.getElementById('shareURL').value = location.href;
+  document.getElementById('shareBox').style.display = 'block';
+  document.getElementById('onlineStatusLine').classList.add('ready');
+  document.getElementById('onlineStatusText').textContent = 'Sala ativa — compartilhe o link!';
+  openModal('onlineModal');
+
+  startHosting(sala);
+}
+
+document.getElementById('btnOnline').addEventListener('click', openOnlineModal);
+document.getElementById('btnOnlineFixed').addEventListener('click', openOnlineModal);
+
+document.getElementById('btnCopyURL').addEventListener('click', async () => {
+  const input = document.getElementById('shareURL');
+  input.select();
+  try {
+    await navigator.clipboard.writeText(input.value);
+    document.getElementById('btnCopyURL').textContent = '✅ Copiado!';
+    setTimeout(() => { document.getElementById('btnCopyURL').textContent = '📋 Copiar link'; }, 1800);
+  } catch {
+    document.execCommand('copy');
+  }
+});
+
+/* --- Detecção automática de sala no load --- */
+(function detectRoom() {
+  const hash = location.hash.replace('#', '');
+  if (!hash) return;
+  const params = new URLSearchParams(hash);
+  const sala = params.get('sala');
+  if (!sala) return;
+
+  const isHost = localStorage.getItem('termo-host-' + sala) === '1';
+  if (isHost) startHosting(sala);
+  else startGuesting(sala);
+})();
+
+/* ============================================================
+   BOTÕES
+   ============================================================ */
+document.getElementById('btnRain').addEventListener('click', () => {
+  if (myRole === 'guest') return;
+  createRain(120);
+});
+document.getElementById('btnClear').addEventListener('click', () => {
+  if (myRole === 'guest') return;
+  particles.length = 0;
+  myScore = 0; herScore = 0;
+  myAnnihilations = 0; herAnnihilations = 0;
+  gameOver = false;
+  updateCounter(); updateDuelHUD();
+});
+
+/* ============================================================
+   DESENHO DOS DOMÍNIOS
+   ============================================================ */
+function drawDomains() {
+  ctx.save();
+  ctx.fillStyle = 'rgba(137, 180, 250, 0.018)';
+  ctx.fillRect(0, 0, W / 2, H);
+  ctx.fillStyle = 'rgba(245, 194, 231, 0.018)';
+  ctx.fillRect(W / 2, 0, W / 2, H);
+
+  const grad = ctx.createLinearGradient(W / 2 - 24, 0, W / 2 + 24, 0);
+  grad.addColorStop(0,    'rgba(137, 180, 250, 0)');
+  grad.addColorStop(0.45, 'rgba(137, 180, 250, 0.35)');
+  grad.addColorStop(0.5,  'rgba(255, 255, 255, 0.55)');
+  grad.addColorStop(0.55, 'rgba(245, 194, 231, 0.35)');
+  grad.addColorStop(1,    'rgba(245, 194, 231, 0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(W / 2 - 24, 0, 48, H);
+  ctx.restore();
+}
+
+/* ============================================================
+   LOOP
+   ============================================================ */
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min((now - last) / 16.67, 3);
+  last = now;
+
+  ctx.fillStyle = 'rgba(30, 30, 46, 0.25)';
+  ctx.fillRect(0, 0, W, H);
+  drawDomains();
+
+  if (myRole === 'guest') {
+    for (const p of particles) p.draw(ctx);
+  } else {
+    resolveAnnihilations();
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.update(dt);
+      if (p.gravity && p.y > H + 50) { particles.splice(i, 1); updateCounter(); continue; }
+      p.draw(ctx);
+    }
+    if (myRole === 'host' && conn && conn.open) {
+      broadcastAcc += dt * 16.67;
+      if (broadcastAcc >= 33) { broadcastAcc = 0; broadcastState(); }
+    }
+  }
+
+  updateEffects();
+  requestAnimationFrame(loop);
+}
+
+/* ============================================================
+   DESEJOS
+   ============================================================ */
+const desejos = [
+  "☕ Vale um lanche pago pelo desenvolvedor",
+  "🍿 Vale cinema com direito a escolha",
+  "🌌 Vale sessão de observação das estrelas (ou reclamar da vida olhando para elas)",
+  "🤗 Vale um abraço de 5 minutos sem soltar",
+];
+const wishListEl = document.getElementById('wishList');
+const wishRevealEl = document.getElementById('wishReveal');
+let selectedWish = null;
+
+desejos.forEach((desejo, index) => {
+  const btn = document.createElement('button');
+  btn.className = 'wish'; btn.type = 'button'; btn.textContent = desejo;
+  btn.addEventListener('click', () => selectWish(index, btn));
+  wishListEl.appendChild(btn);
+});
+
+function selectWish(index, btn) {
+  document.querySelectorAll('.wish').forEach(el => el.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedWish = desejos[index];
+  const mensagens = [
+    "☕ Um lanche pago com carinho. Peça o que quiser — o desenvolvedor que se vire. 🍔",
+    "🍿 O filme é escolha sua, e ninguém vai reclamar. Nem se for aquele que todo mundo já viu. 🎬",
+    "🌌 O céu vai estar limpo. As estrelas, alinhadas. E a conversa, boa. ✨",
+    "🤗 Cinco minutos. Sem pressa, sem soltar. O tempo que for preciso pra recarregar. 💜",
+  ];
+  wishRevealEl.textContent = mensagens[index];
+  wishRevealEl.classList.add('show');
+}
+
+/* ============================================================
+   MODAIS
+   ============================================================ */
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.getElementById('btnWishes').addEventListener('click', () => openModal('wishModal'));
+document.getElementById('btnStar').addEventListener('click', () => {
+  openModal('starModal');
+  startStarAnimation();
+});
+
+document.querySelectorAll('[data-close]').forEach(btn => {
+  btn.addEventListener('click', (e) => closeModal(e.target.dataset.close));
+});
+document.querySelectorAll('.modal').forEach(modal => {
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(modal.id); });
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') document.querySelectorAll('.modal.open').forEach(m => closeModal(m.id));
+});
+
+/* ============================================================
+   ESTRELA VEGA
+   ============================================================ */
+const starCanvas = document.getElementById('starCanvas');
+const starCtx = starCanvas.getContext('2d');
+let starAnimId = null, starParticles = [], starRunning = false;
+
+function resizeStarCanvas() {
+  const rect = starCanvas.getBoundingClientRect();
+  if (rect.width === 0) return;
+  starCanvas.width = rect.width * dpr;
+  starCanvas.height = rect.height * dpr;
+  starCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+function startStarAnimation() {
+  requestAnimationFrame(() => {
+    resizeStarCanvas();
+    if (starRunning) return;
+    starRunning = true;
+    const rect = starCanvas.getBoundingClientRect();
+    const sw = rect.width, sh = rect.height;
+
+    starParticles = [];
+    for (let i = 0; i < 80; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 40 + Math.random() * 200;
+      starParticles.push({
+        angle, dist,
+        speed: (0.001 + Math.random() * 0.003) * (Math.random() < 0.5 ? 1 : -1),
+        r: 0.5 + Math.random() * 1.5, alpha: 0.3 + Math.random() * 0.7,
+        twinkle: Math.random() * Math.PI * 2,
+      });
+    }
+    const bgStars = [];
+    for (let i = 0; i < 120; i++) {
+      bgStars.push({
+        x: Math.random() * sw, y: Math.random() * sh,
+        r: Math.random() * 1.2, alpha: 0.2 + Math.random() * 0.6,
+        phase: Math.random() * Math.PI * 2,
+      });
+    }
+
+    let t = 0;
+    function animate() {
+      t += 0.016;
+      const r2 = starCanvas.getBoundingClientRect();
+      const w = r2.width, h = r2.height;
+      const grad = starCtx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, Math.max(w, h) / 2);
+      grad.addColorStop(0, '#0d0d24');
+      grad.addColorStop(1, '#05050f');
+      starCtx.fillStyle = grad;
+      starCtx.fillRect(0, 0, w, h);
+
+      bgStars.forEach(s => {
+        const tw = 0.5 + 0.5 * Math.sin(t * 2 + s.phase);
+        starCtx.save();
+        starCtx.globalAlpha = s.alpha * tw;
+        starCtx.fillStyle = '#ffffff';
+        starCtx.beginPath(); starCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2); starCtx.fill();
+        starCtx.restore();
+      });
+
+      const cx = w / 2, cy = h / 2;
+      starParticles.forEach(p => {
+        p.angle += p.speed;
+        const x = cx + Math.cos(p.angle) * p.dist;
+        const y = cy + Math.sin(p.angle) * p.dist * 0.35;
+        const tw = 0.5 + 0.5 * Math.sin(t * 3 + p.twinkle);
+        starCtx.save();
+        starCtx.globalAlpha = p.alpha * tw;
+        starCtx.fillStyle = '#cfe6ff';
+        starCtx.beginPath(); starCtx.arc(x, y, p.r, 0, Math.PI * 2); starCtx.fill();
+        starCtx.restore();
+      });
+
+      const halo = starCtx.createRadialGradient(cx, cy, 0, cx, cy, 90);
+      halo.addColorStop(0, 'rgba(180, 220, 255, 0.35)');
+      halo.addColorStop(0.4, 'rgba(140, 180, 255, 0.12)');
+      halo.addColorStop(1, 'rgba(140, 180, 255, 0)');
+      starCtx.fillStyle = halo;
+      starCtx.beginPath(); starCtx.arc(cx, cy, 90, 0, Math.PI * 2); starCtx.fill();
+
+      const core = starCtx.createRadialGradient(cx, cy, 0, cx, cy, 22);
+      core.addColorStop(0, 'rgba(255, 255, 255, 1)');
+      core.addColorStop(0.4, 'rgba(200, 230, 255, 0.9)');
+      core.addColorStop(1, 'rgba(150, 200, 255, 0)');
+      starCtx.fillStyle = core;
+      starCtx.beginPath(); starCtx.arc(cx, cy, 22, 0, Math.PI * 2); starCtx.fill();
+
+      starCtx.save();
+      starCtx.shadowBlur = 30; starCtx.shadowColor = '#a5d8ff';
+      starCtx.fillStyle = '#ffffff';
+      starCtx.beginPath(); starCtx.arc(cx, cy, 5.5, 0, Math.PI * 2); starCtx.fill();
+      starCtx.restore();
+
+      starCtx.save();
+      starCtx.translate(cx, cy);
+      starCtx.rotate(t * 0.15);
+      starCtx.strokeStyle = 'rgba(200, 230, 255, 0.55)';
+      starCtx.lineWidth = 1;
+      for (let i = 0; i < 4; i++) {
+        starCtx.rotate(Math.PI / 2);
+        starCtx.beginPath(); starCtx.moveTo(0, 0);
+        starCtx.lineTo(0, -32 - Math.sin(t * 2 + i) * 4);
+        starCtx.stroke();
+      }
+      starCtx.restore();
+
+      starAnimId = requestAnimationFrame(animate);
+    }
+    animate();
+  });
+}
+
+window.addEventListener('resize', () => {
+  if (starRunning && document.getElementById('starModal').classList.contains('open')) resizeStarCanvas();
+});
+
+/* ============================================================
+   INICIALIZAÇÃO
+   ============================================================ */
+if (myRole !== 'guest') createRain(60);
+updateCounter();
+updateDuelHUD();
+updateDuelLabels();
+requestAnimationFrame(loop);
+
+/* ============================================================
+   PAINEL DO LABORATÓRIO
+   ============================================================ */
+const tempSlider    = document.getElementById('tempSlider');
+const tempValueEl   = document.getElementById('tempValue');
+const entropyValueEl= document.getElementById('entropyValue');
+const entropyFillEl = document.getElementById('entropyFill');
+const entropyStateEl= document.getElementById('entropyState');
+const chaosValueEl  = document.getElementById('chaosValue');
+const chaosStateEl  = document.getElementById('chaosState');
+const labPanel      = document.getElementById('labPanel');
+const labToggle     = document.getElementById('labToggle');
+
+function applyTemperature(newT) {
+  const ratio = Math.sqrt(newT / systemTemperature);
+  for (const p of particles) { p.vx *= ratio; p.vy *= ratio; }
+  systemTemperature = newT;
+  tempValueEl.textContent = Math.round(newT) + ' K';
+  const t = Math.max(0, Math.min(1, (newT - 1) / 999));
+  const r = Math.round(137 + t * (243 - 137));
+  const g = Math.round(180 + t * (139 - 180));
+  const b = Math.round(250 + t * (168 - 250));
+  tempValueEl.style.color = `rgb(${r}, ${g}, ${b})`;
+}
+
+tempSlider.addEventListener('input', (e) => applyTemperature(parseFloat(e.target.value)));
+tempSlider.addEventListener('change', () => registerExperiment());
+
+function chaosRank(n) {
+  if (n === 0)  return 'Nenhum experimento ainda';
+  if (n < 5)    return '🧪 Aprendiz de laboratório';
+  if (n < 15)   return '⚗️ Cientista curioso';
+  if (n < 30)   return '🔬 Pesquisador dedicado';
+  if (n < 60)   return '🌪️ Mestre do caos controlado';
+  return '💥 Lenda da termodinâmica afetiva';
+}
+function registerExperiment() {
+  experimentsCount++;
+  chaosValueEl.textContent = experimentsCount;
+  chaosStateEl.textContent = chaosRank(experimentsCount);
+  chaosValueEl.classList.remove('pop');
+  void chaosValueEl.offsetWidth;
+  chaosValueEl.classList.add('pop');
+}
+document.getElementById('btnRegister').addEventListener('click', registerExperiment);
+
+const ENTROPY_GRID = 12;
+function computeEntropy() {
+  const N = particles.length;
+  if (N === 0) return 0;
+  const cells = new Array(ENTROPY_GRID * ENTROPY_GRID).fill(0);
+  const cw = W / ENTROPY_GRID, ch = H / ENTROPY_GRID;
+  for (const p of particles) {
+    let gx = Math.floor(p.x / cw), gy = Math.floor(p.y / ch);
+    if (gx < 0) gx = 0; else if (gx >= ENTROPY_GRID) gx = ENTROPY_GRID - 1;
+    if (gy < 0) gy = 0; else if (gy >= ENTROPY_GRID) gy = ENTROPY_GRID - 1;
+    cells[gy * ENTROPY_GRID + gx]++;
+  }
+  let S = 0;
+  for (const c of cells) { if (c > 0) { const p = c / N; S -= p * Math.log(p); } }
+  const maxCells = Math.min(N, ENTROPY_GRID * ENTROPY_GRID);
+  const maxS = Math.log(maxCells);
+  return maxS > 0 ? S / maxS : 0;
+}
+function entropyLabel(s) {
+  if (s < 0.15) return '❄️ Cristal perfeito';
+  if (s < 0.32) return '🔷 Ordem emergente';
+  if (s < 0.50) return '🌊 Fluido em trânsito';
+  if (s < 0.70) return '🔥 Equilíbrio térmico';
+  if (s < 0.88) return '🌪️ Difusão caótica';
+  return '💥 Caos máximo';
+}
+setInterval(() => {
+  currentEntropy = computeEntropy();
+  entropyValueEl.textContent = currentEntropy.toFixed(3);
+  entropyFillEl.style.width = (currentEntropy * 100).toFixed(1) + '%';
+  entropyStateEl.textContent = entropyLabel(currentEntropy);
+}, 160);
+
+document.getElementById('btnRain').addEventListener('click', registerExperiment);
+document.getElementById('btnClear').addEventListener('click', registerExperiment);
+document.getElementById('btnWishes').addEventListener('click', registerExperiment);
+document.getElementById('btnStar').addEventListener('click', registerExperiment);
+document.getElementById('btnExperiments').addEventListener('click', registerExperiment);
+document.getElementById('btnOnline').addEventListener('click', registerExperiment);
+canvas.addEventListener('pointerdown', registerExperiment);
+
+labToggle.addEventListener('click', () => {
+  labPanel.classList.toggle('collapsed');
+  labToggle.textContent = labPanel.classList.contains('collapsed') ? '+' : '−';
+});
+if (window.innerWidth <= 640) {
+  labPanel.classList.add('collapsed');
+  labToggle.textContent = '+';
+}
+
+/* ============================================================
+   EXPERIMENTOS CRIATIVOS
+   ============================================================ */
+const ORACULO_FRASES = [
+  "Algumas coincidências parecem ter sido calculadas com cuidado.",
+  "Se duas partículas se encontram, o universo tinha um plano.",
+  "Toda entropia é uma forma disfarçada de saudade.",
+  "O observador altera o sistema — e o sistema, gentilmente, altera o observador.",
+  "Nenhum estado é tão estável quanto a vontade de te ver de novo.",
+  "O tempo só passa devagar quando a gente não está olhando.",
+  "Existem variáveis que não cabem em nenhuma equação.",
+  "A temperatura ambiente sobe um pouco quando você chega perto.",
+  "Toda órbita é, no fundo, uma forma elegante de ficar.",
+  "O acaso é o apelido que damos ao que ainda não sabemos explicar.",
+  "Um sistema em equilíbrio é um sistema que desistiu de surpreender.",
+  "Se o amor fosse uma força, seria a única que não decai com a distância.",
+];
+const ELOGIOS_FRASES = [
+  "Sua presença altera as condições de contorno de qualquer dia ruim.",
+  "Você é a constante que não muda, mesmo quando tudo muda.",
+  "Seu sorriso tem entropia baixa: tudo se organiza ao redor.",
+  "Você é a exceção que confirma todas as regras bonitas.",
+  "Existem pessoas que iluminam; você é uma delas, com espectro de Vega.",
+  "Sua fofura é mensurável — e o resultado extrapola a escala.",
+  "Você é o tipo de variável que a gente quer manter constante.",
+  "Toda hipótese do oráculo é, no fundo, sobre você.",
+  "Seu jeito é o único estado do sistema que nunca decai.",
+  "Você faz o laboratório inteiro parecer mais bonito.",
+  "Se o caos tem beleza, é porque em algum lugar ele se parece com você.",
+  "Você é o resultado que nenhuma equação consegue prever — e a gente nem quer.",
+];
+const oracleQuoteEl     = document.getElementById('oracleQuote');
+const complimentQuoteEl = document.getElementById('complimentQuote');
+function flash(el, text) {
+  el.classList.remove('flash');
+  el.textContent = '“' + text + '”';
+  void el.offsetWidth;
+  el.classList.add('flash');
+}
+function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+document.getElementById('btnOracle').addEventListener('click', () => {
+  flash(oracleQuoteEl, pickRandom(ORACULO_FRASES));
+  registerExperiment();
+});
+document.getElementById('btnCompliment').addEventListener('click', () => {
+  flash(complimentQuoteEl, pickRandom(ELOGIOS_FRASES));
+  registerExperiment();
+});
+document.getElementById('btnExperiments').addEventListener('click', () => {
+  openModal('oracleModal');
+  registerExperiment();
+});
+
+applyTemperature(BASE_TEMPERATURE);
+chaosStateEl.textContent = chaosRank(0);
+</script>
+</body>
+</html>
