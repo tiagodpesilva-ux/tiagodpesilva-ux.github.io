@@ -73,18 +73,41 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   font-weight: 600;
 }
 
-/* Botão que minimiza/expande os controles */
+/* ============================================================
+   Botão que minimiza/expande os controles
+   Fica ao lado do painel do laboratório (fixo no topo-esquerdo).
+   ============================================================ */
 #btnToggleControls {
+  position: fixed;
+  top: 1rem;
+  left: calc(1rem + 252px + 0.5rem); /* logo à direita do lab-panel */
+  z-index: 30;
   background: linear-gradient(135deg, rgba(137,180,250,0.35), rgba(245,194,231,0.35));
-  border-color: rgba(245,194,231,0.6);
+  border: 1px solid rgba(245,194,231,0.6);
   font-weight: 700;
   min-width: 44px;
   padding: 0.6rem 0.8rem;
   font-size: 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text);
+  transition: all 0.2s ease;
+  font-family: inherit;
+  line-height: 1;
+}
+#btnToggleControls:hover {
+  background: var(--blue);
+  color: var(--bg);
+  transform: translateY(-2px);
 }
 
-/* Quando a barra está colapsada, esconde todos os botões exceto o toggle */
-#controlsBar.collapsed > button:not(#btnToggleControls) {
+/* Guest: lab-panel oculto → botão vai para o canto onde ele estaria */
+body.guest-view #btnToggleControls {
+  left: 1rem;
+}
+
+/* Quando a barra está colapsada, esconde todos os botões de controles */
+#controlsBar.collapsed > button {
   display: none;
 }
 
@@ -331,6 +354,14 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   .counter { font-size: 0.68rem; padding: 0.3rem 0.6rem; }
   .status-pill { font-size: 0.65rem; top: 2.8rem; padding: 0.25rem 0.55rem; }
 
+  /* Toggle no canto superior esquerdo no mobile (o lab-panel vai pro rodapé) */
+  #btnToggleControls {
+    top: 0.5rem;
+    left: 0.5rem;
+    padding: 0.5rem 0.65rem;
+    font-size: 0.9rem;
+  }
+
   .duel-hud { bottom: auto; top: 6.5rem; padding: 0 0.5rem; }
   .duel-panel { min-width: 0; padding: 0.45rem 0.65rem; border-radius: 10px; }
   .duel-panel .score { font-size: 1.25rem; }
@@ -351,7 +382,6 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 <p class="subtitle">Dois domínios, duas cores, uma disputa cósmica ✨</p>
 
 <div class="controls" id="controlsBar">
-  <button id="btnToggleControls" title="Minimizar controles">−</button>
   <button id="btnOnline">🌐 Jogar Online</button>
   <button id="btnRain">🌧️ Chuva de partículas</button>
   <button id="btnClear">🧹 Limpar tudo</button>
@@ -401,6 +431,9 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
     </div>
   </div>
 </aside>
+
+<!-- Botão de minimizar, ao lado do painel do laboratório -->
+<button id="btnToggleControls" title="Minimizar controles">−</button>
 
 <div class="modal" id="onlineModal">
   <div class="modal-content" style="position: relative; text-align: center;">
@@ -558,11 +591,18 @@ document.getElementById('btnRestart').addEventListener('click', () => {
   updateDuelHUD();
   updateCounter();
   closeModal('winModal');
-  if (myRole === 'host' || myRole === 'solo') createRain(80);
+  if (myRole === 'solo') {
+    createRain(80);
+  } else if (myRole === 'host') {
+    createRain(80);
+    broadcastState();
+  } else if (myRole === 'guest') {
+    if (conn && conn.open) conn.send({ type: 'rain' });
+  }
 });
 
 /* ============================================================
-   MINIMIZADOR DOS CONTROLES
+   MINIMIZADOR DOS CONTROLES (ao lado do painel do laboratório)
    ============================================================ */
 const controlsBar = document.getElementById('controlsBar');
 const btnToggleControls = document.getElementById('btnToggleControls');
@@ -754,6 +794,15 @@ function createBurst(x, y, count = 10) {
   updateCounter();
 }
 
+function clearAll() {
+  particles.length = 0;
+  myScore = 0; herScore = 0;
+  myAnnihilations = 0; herAnnihilations = 0;
+  gameOver = false;
+  updateCounter();
+  updateDuelHUD();
+}
+
 /* ============================================================
    MULTIPLAYER (PeerJS)
    ============================================================ */
@@ -799,13 +848,6 @@ function updateDuelLabels() {
   }
 }
 
-/* ------------------------------------------------------------
-   Aplicação de clique.
-   fromRemote = clique veio do guest (via rede) e está sendo
-                aplicado pela primeira vez no host.
-   reachExtra = margem adicional de detecção (para compensar
-                atraso de rede quando fromRemote === true)
-   ------------------------------------------------------------ */
 function applyPlayerClick(mx, my, player, fromRemote, broadcastNow) {
   if (gameOver) return;
 
@@ -816,7 +858,6 @@ function applyPlayerClick(mx, my, player, fromRemote, broadcastNow) {
   }
 
   let collected = 0, annihilated = 0;
-  // Raio de detecção — maior pra cliques remotos (rede + partícula se moveu)
   const baseReach = fromRemote ? 32 : 14;
 
   for (let i = particles.length - 1; i >= 0; i--) {
@@ -855,14 +896,37 @@ function applyPlayerClick(mx, my, player, fromRemote, broadcastNow) {
     updateCounter();
     checkWin();
 
-    // Host: se foi um clique remoto, transmite o estado imediatamente
-    // para reduzir o delay percebido pelo guest.
     if (broadcastNow && myRole === 'host' && conn && conn.open) {
       broadcastState();
     }
   } else if (!fromRemote) {
-    // Clique no vazio — pequena explosão decorativa
     createBurst(mx, my, 8);
+  }
+}
+
+function predictGuestVisuals(mx, my) {
+  let collected = 0, annihilated = 0;
+  const reachExtra = 32;
+  for (const p of particles) {
+    const dx = p.x - mx, dy = p.y - my;
+    const reach = p.r + reachExtra;
+    if (dx * dx + dy * dy > reach * reach) continue;
+    if (p.color === PINK) {
+      collected++;
+      spawnRipple(p.x, p.y, PINK, 32, 2.2);
+      spawnRipple(p.x, p.y, '#ffffff', 20, 1.4);
+    } else {
+      annihilated++;
+      spawnRipple(p.x, p.y, '#ffffff', 44, 3);
+      spawnRipple(p.x, p.y, BLUE, 30, 2);
+    }
+  }
+  if (collected > 0) {
+    spawnFloatText(mx, my - 20, '+' + collected, PINK);
+    popPanel('pink');
+  }
+  if (annihilated > 0) {
+    spawnFloatText(mx, my + 4, '💔 ' + annihilated, BLUE);
   }
 }
 
@@ -872,33 +936,23 @@ canvas.addEventListener('pointerdown', (e) => {
   const mx = e.clientX - rect.left;
   const my = e.clientY - rect.top;
 
-  // -------- MODO SOLO: dois lados no mesmo aparelho --------
   if (myRole === 'solo') {
     applyPlayerClick(mx, my, mx < W / 2 ? 'blue' : 'pink', false, false);
     return;
   }
 
-  // -------- HOST (Tiago): só age no domínio esquerdo --------
   if (myRole === 'host') {
     applyPlayerClick(mx, my, 'blue', false, false);
     return;
   }
 
-  // -------- GUEST (Julia): NÃO aplica localmente --------
-  // Aplica só um feedback visual (ripple) e envia o clique pro host.
-  // O host processa e devolve o estado atualizado — assim não há
-  // "ressurreição" da partícula por estados antigos chegando fora de ordem.
   if (mx <= W / 2) {
-    // Tocou no lado errado (lado do Tiago) — só um ripple neutro
     spawnRipple(mx, my, '#ffffff', 20, 1);
     return;
   }
 
-  // Feedback visual imediato no lado do guest
-  spawnRipple(mx, my, PINK, 30, 2);
-  spawnRipple(mx, my, '#ffffff', 18, 1.2);
+  predictGuestVisuals(mx, my);
 
-  // Envia o clique pro host
   if (conn && conn.open) {
     conn.send({ type: 'click', x: mx / W, y: my / H });
   }
@@ -944,6 +998,12 @@ function setupConn() {
     if (myRole === 'host') {
       if (data.type === 'click') {
         applyPlayerClick(data.x * W, data.y * H, 'pink', true, true);
+      } else if (data.type === 'rain') {
+        createRain(120);
+        broadcastState();
+      } else if (data.type === 'clear') {
+        clearAll();
+        broadcastState();
       }
     } else {
       if (data.type === 'state') applyRemoteState(data);
@@ -965,6 +1025,7 @@ function setupConn() {
 function startHosting(sala) {
   myRole = 'host';
   isOnline = true;
+  document.body.classList.remove('guest-view');
   updateDuelLabels();
   setStatus('Aguardando Julia entrar...', 'waiting');
 
@@ -994,10 +1055,14 @@ function startHosting(sala) {
 function startGuesting(sala) {
   myRole = 'guest';
   isOnline = true;
+  document.body.classList.add('guest-view');
   updateDuelLabels();
   setStatus('Conectando à sala do Tiago...', 'waiting');
   particles.length = 0;
   updateCounter();
+
+  const labPanelEl = document.getElementById('labPanel');
+  if (labPanelEl) labPanelEl.style.display = 'none';
 
   console.log('[guest] criando Peer anônimo...');
   peer = new Peer(PEER_CONFIG);
@@ -1081,19 +1146,22 @@ document.getElementById('btnCopyURL').addEventListener('click', async () => {
 })();
 
 /* ============================================================
-   BOTÕES
+   BOTÕES — ações iguais para host e guest
    ============================================================ */
 document.getElementById('btnRain').addEventListener('click', () => {
-  if (myRole === 'guest') return;
+  if (myRole === 'guest') {
+    if (conn && conn.open) conn.send({ type: 'rain' });
+    return;
+  }
   createRain(120);
 });
+
 document.getElementById('btnClear').addEventListener('click', () => {
-  if (myRole === 'guest') return;
-  particles.length = 0;
-  myScore = 0; herScore = 0;
-  myAnnihilations = 0; herAnnihilations = 0;
-  gameOver = false;
-  updateCounter(); updateDuelHUD();
+  if (myRole === 'guest') {
+    if (conn && conn.open) conn.send({ type: 'clear' });
+    return;
+  }
+  clearAll();
 });
 
 /* ============================================================
@@ -1328,6 +1396,10 @@ window.addEventListener('resize', () => {
    INICIALIZAÇÃO
    ============================================================ */
 if (myRole !== 'guest') createRain(60);
+if (myRole === 'guest') {
+  const labPanelEl = document.getElementById('labPanel');
+  if (labPanelEl) labPanelEl.style.display = 'none';
+}
 updateCounter();
 updateDuelHUD();
 updateDuelLabels();
