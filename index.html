@@ -130,13 +130,13 @@ body.guest-view #btnToggleControls {
 @keyframes pulse { 0%,100%{opacity:0.4;} 50%{opacity:1;} }
 
 .duel-hud {
-  position: relative; width: 100%; max-width: 560px; margin: 0 0 0.75rem;
+  position: relative; width: 100%; max-width: 420px; margin: 0 0 0.5rem;
   display: flex; justify-content: space-between; gap: 0.75rem;
   z-index: 10; pointer-events: none;
 }
 
 .duel-panel {
-  flex: 1; padding: 0.7rem 1.1rem; border-radius: 14px;
+  flex: 1; padding: 0.4rem 0.7rem; border-radius: 12px;
   backdrop-filter: blur(10px); pointer-events: none;
   transition: transform 0.18s ease, box-shadow 0.3s ease;
   min-width: 0;
@@ -153,13 +153,13 @@ body.guest-view #btnToggleControls {
 .duel-panel.pop-blue { transform: scale(1.1); box-shadow: 0 0 28px rgba(137, 180, 250, 0.8); }
 .duel-panel.pop-pink { transform: scale(1.1); box-shadow: 0 0 28px rgba(245, 194, 231, 0.8); }
 
-.duel-panel .name { font-size: 0.78rem; font-weight: 700; color: var(--text); letter-spacing: 0.06em; }
-.duel-panel .score { font-size: 1.7rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.duel-panel .name { font-size: 0.68rem; font-weight: 700; color: var(--text); letter-spacing: 0.06em; }
+.duel-panel .score { font-size: 1.2rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
 .blue-side .score { color: var(--blue); }
 .pink-side .score { color: var(--pink); }
-.duel-panel .rule { font-size: 0.65rem; color: var(--muted); margin-top: 0.35rem; opacity: 0.85; line-height: 1.3; }
-.goal { font-size: 0.7rem; color: var(--muted); font-weight: 500; margin-left: 0.15rem; }
-.energy { height: 6px; border-radius: 3px; background: rgba(0,0,0,0.35); overflow: hidden; margin-top: 0.4rem; display: flex; }
+.duel-panel .rule { font-size: 0.55rem; color: var(--muted); margin-top: 0.25rem; opacity: 0.85; line-height: 1.3; }
+.goal { font-size: 0.6rem; color: var(--muted); font-weight: 500; margin-left: 0.15rem; }
+.energy { height: 4px; border-radius: 3px; background: rgba(0,0,0,0.35); overflow: hidden; margin-top: 0.25rem; display: flex; }
 .pink-side .energy { justify-content: flex-end; }
 .energy-fill { height: 100%; width: 100%; border-radius: 3px; transition: width 0.15s linear; }
 .blue-side .energy-fill { background: linear-gradient(90deg, #89b4fa, #b4d0ff); }
@@ -370,10 +370,10 @@ body.guest-view #btnToggleControls {
   }
 
   .duel-hud { margin-top: 3.2rem; gap: 0.5rem; }
-  .duel-panel { padding: 0.45rem 0.65rem; border-radius: 10px; }
-  .duel-panel .score { font-size: 1.25rem; }
-  .duel-panel .name { font-size: 0.68rem; }
-  .duel-panel .rule { font-size: 0.55rem; }
+  .duel-panel { padding: 0.3rem 0.5rem; border-radius: 10px; }
+  .duel-panel .score { font-size: 1rem; }
+  .duel-panel .name { font-size: 0.6rem; }
+  .duel-panel .rule { font-size: 0.5rem; }
 
   .lab-panel {
     top: auto; bottom: 1rem; left: 1rem; right: 1rem; width: auto;
@@ -962,10 +962,11 @@ function updateDuelLabels() {
 }
 
 // partícula mais próxima do toque (dentro da folga), ou -1
-function findParticleAt(mx, my, tol) {
+function findParticleAt(mx, my, tol, onlyColor) {
   let best = -1, bestD = Infinity;
   for (let i = 0; i < particles.length; i++) {
     const p = particles[i];
+    if (onlyColor && p.color !== onlyColor) continue;   // ignora partículas da própria cor
     const dx = p.x - mx, dy = p.y - my;
     const d2 = dx * dx + dy * dy;
     const reach = p.r + tol;
@@ -984,7 +985,7 @@ function applyPlayerClick(mx, my, player, fromRemote, broadcastNow, touch = fals
   const inOwnDomain = player === 'blue' ? (mx < W / 2) : (mx > W / 2);
   const tol = (fromRemote ? HIT_TOLERANCE_REMOTE : HIT_TOLERANCE_LOCAL) + (touch ? HIT_TOUCH_BONUS : 0);
 
-  const hit = findParticleAt(mx, my, tol);
+  const hit = findParticleAt(mx, my, tol, enemyColor);
   if (hit >= 0) {
     const p = particles[hit];
     spawnRipple(p.x, p.y, '#ffffff', 44, 3);
@@ -995,8 +996,6 @@ function applyPlayerClick(mx, my, player, fromRemote, broadcastNow, touch = fals
       refreshReady(player);
       spawnFloatText(p.x, p.y, '💔 +⚡', p.color);
       pulseEnergy(player);
-    } else {
-      spawnFloatText(p.x, p.y, '✖', '#ffffff');   // fogo amigo
     }
     particles.splice(hit, 1);
     updateCounter();
@@ -1020,7 +1019,7 @@ function applyPlayerClick(mx, my, player, fromRemote, broadcastNow, touch = fals
 
 // previsão visual no convidado (o host é quem decide de verdade)
 function predictGuestVisuals(mx, my, touch = false) {
-  const hit = findParticleAt(mx, my, HIT_TOLERANCE_REMOTE + (touch ? HIT_TOUCH_BONUS : 0));
+  const hit = findParticleAt(mx, my, HIT_TOLERANCE_REMOTE + (touch ? HIT_TOUCH_BONUS : 0), BLUE);
   if (hit >= 0) {
     const p = particles[hit];
     spawnRipple(p.x, p.y, '#ffffff', 44, 3);
@@ -1058,13 +1057,8 @@ canvas.addEventListener('pointerdown', (e) => {
   const touch = e.pointerType === 'touch' || e.pointerType === 'pen';
 
   if (myRole === 'solo') {
-    // modo treino: acertar uma partícula conta sempre como ataque do lado oposto
-    // (assim dá para testar o ganho de energia); no vazio, o lado do clique decide quem cria
-    const hit = findParticleAt(mx, my, HIT_TOLERANCE_LOCAL + (touch ? HIT_TOUCH_BONUS : 0));
-    const who = hit >= 0
-      ? (particles[hit].color === BLUE ? 'pink' : 'blue')
-      : (mx < W / 2 ? 'blue' : 'pink');
-    applyPlayerClick(mx, my, who, false, false, touch);
+    // modo treino: você joga como o Tiago (azul)
+    applyPlayerClick(mx, my, 'blue', false, false, touch);
     return;
   }
 
