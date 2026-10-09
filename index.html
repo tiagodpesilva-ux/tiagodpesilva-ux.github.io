@@ -625,6 +625,9 @@ function speedScale() { return Math.sqrt(systemTemperature / BASE_TEMPERATURE); 
 /* ============================================================
    PARTÍCULA
    ============================================================ */
+// ✨ NOVO: IDs estáveis para o convidado identificar cada partícula entre snapshots
+let nextParticleId = 1;
+
 class Particle {
   constructor(x, y, opts = {}) {
     this.x = x;
@@ -637,6 +640,7 @@ class Particle {
     this.color = opts.color || (Math.random() < 0.5 ? BLUE : PINK);
     this.gravity = opts.gravity !== undefined ? opts.gravity : 0;
     this.dead = false;
+    this.id = (nextParticleId++) & 0xFFFF;
   }
   update(dt) {
     // PAREDE CENTRAL IMPERMEÁVEL
@@ -749,7 +753,7 @@ function updateEffects() {
 /* ============================================================
    ANIQUILAÇÃO POR COLISÃO
    ============================================================ */
-// ✨ ALTERAÇÃO: agora só aniquila cores OPOSTAS. Cores iguais convivem.
+// Só aniquila cores OPOSTAS. Cores iguais convivem.
 const ANNIHILATION_CELL = 24;
 function resolveAnnihilations() {
   const n = particles.length;
@@ -776,14 +780,12 @@ function resolveAnnihilations() {
           if (j <= i) continue;
           const q = particles[j];
           if (q.dead) continue;
-          // ✨ ALTERAÇÃO: pula se as cores forem IGUAIS (antes era !== )
           if (q.color === p.color) continue;
           const ddx = p.x - q.x, ddy = p.y - q.y;
           const rr = p.r + q.r;
           if (ddx * ddx + ddy * ddy <= rr * rr) {
             p.dead = true; q.dead = true; anyDead = true;
             const mx = (p.x + q.x) * 0.5, my = (p.y + q.y) * 0.5;
-            // Cor neutra (branca) para o efeito, já que agora são cores diferentes
             spawnRipple(mx, my, '#ffffff', 40, 2.5);
             spawnRipple(mx, my, p.color, 30, 1.8);
             spawnRipple(mx, my, q.color, 30, 1.8);
@@ -981,33 +983,84 @@ canvas.addEventListener('pointerdown', (e) => {
   }
 });
 
+// ✨ NOVO: snapshot binário (12 bytes/partícula) com velocidade e número de sequência
+let stateSeq = 0;
 function broadcastState() {
   if (!conn || !conn.open) return;
-  const winner = gameOver
-    ? (myScore >= WIN_SCORE ? 'blue' : 'pink')
-    : null;
-  const payload = {
+  const winner = gameOver ? (myScore >= WIN_SCORE ? 'blue' : 'pink') : null;
+
+  const n = particles.length;
+  const buf = new ArrayBuffer(n * 12);
+  const dv = new DataView(buf);
+  for (let i = 0; i < n; i++) {
+    const p = particles[i];
+    const o = i * 12;
+    dv.setUint16(o,      p.id);
+    dv.setInt16 (o + 2,  Math.round(p.x / W * 10000));
+    dv.setInt16 (o + 4,  Math.round(p.y / H * 10000));
+    dv.setInt16 (o + 6,  Math.round(p.vx / W * 100000));
+    dv.setInt16 (o + 8,  Math.round(p.vy / H * 100000));
+    dv.setUint8 (o + 10, Math.min(255, Math.round(p.r * 10)));
+    dv.setUint8 (o + 11, (p.color === BLUE ? 0 : 1) | (p.gravity ? 2 : 0));
+  }
+
+  conn.send({
     type: 'state',
-    ps: particles.map(p => [
-      Math.round(p.x / W * 1000) / 1000,
-      Math.round(p.y / H * 1000) / 1000,
-      Math.round(p.r * 10) / 10,
-      p.color === BLUE ? 0 : 1,
-    ]),
+    seq: ++stateSeq,
+    buf,
     s: [myScore, herScore, myAnnihilations, herAnnihilations],
     w: winner,
-  };
-  conn.send(payload);
+  });
 }
 
+// ✨ NOVO: convidado simula localmente e corrige suavemente em direção ao host
+let lastSeq = 0;
+const SNAP_DIST = 80;     // acima disso (px) teleporta
+const CORRECTION = 0.35;  // 0 = ignora o host, 1 = cola no host
+
 function applyRemoteState(data) {
-  particles.length = 0;
-  for (const [x, y, r, c] of data.ps) {
-    const np = new Particle(x * W, y * H, { r });
-    np.color = c === 0 ? BLUE : PINK;
-    np.vx = 0; np.vy = 0;
-    particles.push(np);
+  // descarta snapshots velhos/fora de ordem (tolera reinício do contador do host)
+  if (data.seq <= lastSeq && lastSeq - data.seq < 100000) return;
+  lastSeq = data.seq;
+
+  const u8 = new Uint8Array(data.buf);
+  const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+  const n = Math.floor(u8.length / 12);
+
+  const byId = new Map();
+  for (const p of particles) byId.set(p.id, p);
+  const next = [];
+
+  for (let i = 0; i < n; i++) {
+    const o = i * 12;
+    const id = dv.getUint16(o);
+    const tx = dv.getInt16(o + 2) / 10000 * W;
+    const ty = dv.getInt16(o + 4) / 10000 * H;
+    const vx = dv.getInt16(o + 6) / 100000 * W;
+    const vy = dv.getInt16(o + 8) / 100000 * H;
+    const r  = dv.getUint8(o + 10) / 10;
+    const fl = dv.getUint8(o + 11);
+
+    let p = byId.get(id);
+    if (!p) {
+      p = new Particle(tx, ty, { r });
+      p.id = id;
+    } else {
+      const dx = tx - p.x, dy = ty - p.y;
+      if (dx * dx + dy * dy > SNAP_DIST * SNAP_DIST) { p.x = tx; p.y = ty; }
+      else { p.x += dx * CORRECTION; p.y += dy * CORRECTION; }
+    }
+    p.r = r;
+    p.vx = vx;
+    p.vy = vy;
+    p.color = (fl & 1) ? PINK : BLUE;
+    p.gravity = (fl & 2) ? 0.05 : 0;
+    next.push(p);
   }
+
+  particles.length = 0;
+  for (const p of next) particles.push(p);
+
   [myScore, herScore, myAnnihilations, herAnnihilations] = data.s;
   updateDuelHUD();
   updateCounter();
@@ -1102,7 +1155,8 @@ function startGuesting(sala) {
   peer.on('open', (id) => {
     console.log('[guest] ✅ Peer aberto com id:', id);
     console.log('[guest] conectando ao host:', sala);
-    conn = peer.connect(sala);
+    // ✨ ALTERAÇÃO: canal não ordenado + binário, para pacote atrasado não travar os seguintes
+    conn = peer.connect(sala, { reliable: false, serialization: 'binary' });
     setupConn();
   });
 
@@ -1230,7 +1284,13 @@ function loop(now) {
   drawDomains();
 
   if (myRole === 'guest') {
-    for (const p of particles) p.draw(ctx);
+    // ✨ ALTERAÇÃO: o convidado também simula a física a cada frame
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.update(dt);
+      if (p.gravity && p.y > H + 50) { particles.splice(i, 1); continue; }
+      p.draw(ctx);
+    }
   } else {
     resolveAnnihilations();
     for (let i = particles.length - 1; i >= 0; i--) {
@@ -1242,7 +1302,7 @@ function loop(now) {
     recountScores();
     if (myRole === 'host' && conn && conn.open) {
       broadcastAcc += dt * 16.67;
-      if (broadcastAcc >= 33) { broadcastAcc = 0; broadcastState(); }
+      if (broadcastAcc >= 40) { broadcastAcc = 0; broadcastState(); }   // era 33
     }
   }
 
@@ -1276,7 +1336,7 @@ function selectWish(index, btn) {
   selectedWish = desejos[index];
   const mensagens = [
     "☕ Um lanche pago com carinho. Peça o que quiser — o desenvolvedor que se vire. 🍔",
-    "🍿 O filme é escolha sua, e ninguém vai reclamar. Nem se for aquele que todo mundo já viu. 🎬",
+    "🍿 O filme é escolha sua, e ninguém vai reclamar. 🎬",
     "🌌 O céu vai estar limpo. As estrelas, alinhadas. E a conversa, boa. ✨",
     "🤗 Cinco minutos. Sem pressa, sem soltar. O tempo que for preciso pra recarregar. 💜",
   ];
