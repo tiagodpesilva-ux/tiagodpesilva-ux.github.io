@@ -73,14 +73,10 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   font-weight: 600;
 }
 
-/* ============================================================
-   Botão que minimiza/expande os controles
-   Fica ao lado do painel do laboratório (fixo no topo-esquerdo).
-   ============================================================ */
 #btnToggleControls {
   position: fixed;
   top: 1rem;
-  left: calc(1rem + 252px + 0.5rem); /* logo à direita do lab-panel */
+  left: calc(1rem + 252px + 0.5rem);
   z-index: 30;
   background: linear-gradient(135deg, rgba(137,180,250,0.35), rgba(245,194,231,0.35));
   border: 1px solid rgba(245,194,231,0.6);
@@ -101,12 +97,10 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   transform: translateY(-2px);
 }
 
-/* Guest: lab-panel oculto → botão vai para o canto onde ele estaria */
 body.guest-view #btnToggleControls {
   left: 1rem;
 }
 
-/* Quando a barra está colapsada, esconde todos os botões de controles */
 #controlsBar.collapsed > button {
   display: none;
 }
@@ -354,7 +348,6 @@ body.guest-view #btnToggleControls {
   .counter { font-size: 0.68rem; padding: 0.3rem 0.6rem; }
   .status-pill { font-size: 0.65rem; top: 2.8rem; padding: 0.25rem 0.55rem; }
 
-  /* Toggle no canto superior esquerdo no mobile (o lab-panel vai pro rodapé) */
   #btnToggleControls {
     top: 0.5rem;
     left: 0.5rem;
@@ -398,12 +391,12 @@ body.guest-view #btnToggleControls {
   <div class="duel-panel blue-side" id="myPanel">
     <div class="name" id="blueName"><span class="devil-blue">😈</span> TIAGO</div>
     <div class="score" id="myScore">0</div>
-    <div class="rule" id="blueRule">💙 coleta · 💔 aniquila rosa</div>
+    <div class="rule" id="blueRule">💙 domina azuis · 💔 aniquila rosas</div>
   </div>
   <div class="duel-panel pink-side" id="herPanel">
     <div class="name" id="pinkName">JULIA <span class="devil-pink">😈</span></div>
     <div class="score" id="herScore">0</div>
-    <div class="rule" id="pinkRule">💗 coleta · 💔 aniquila azul</div>
+    <div class="rule" id="pinkRule">💗 domina rosas · 💔 aniquila azuis</div>
   </div>
 </div>
 
@@ -432,7 +425,6 @@ body.guest-view #btnToggleControls {
   </div>
 </aside>
 
-<!-- Botão de minimizar, ao lado do painel do laboratório -->
 <button id="btnToggleControls" title="Minimizar controles">−</button>
 
 <div class="modal" id="onlineModal">
@@ -543,7 +535,7 @@ resize();
 const BLUE = '#89b4fa';
 const PINK = '#f5c2e7';
 const MAX_PARTICLES = 1500;
-const WIN_SCORE = 25;
+const WIN_SCORE = 50;
 
 let myScore = 0;
 let herScore = 0;
@@ -569,17 +561,24 @@ function popPanel(which) {
   setTimeout(() => el.classList.remove('pop-blue', 'pop-pink'), 180);
 }
 
+function showWinModal(winner) {
+  const iWon = winner === 'blue';
+  document.getElementById('winTitle').textContent = iWon
+    ? '🏆 TIAGO VENCEU!' : '🏆 JULIA VENCEU!';
+  document.getElementById('winMessage').innerHTML = iWon
+    ? `Tiago dominou <strong style="color:var(--blue)">${myScore}</strong> partículas azuis no seu domínio<br>e aniquilou <strong style="color:var(--pink)">${myAnnihilations}</strong> rosas invasoras.`
+    : `Julia dominou <strong style="color:var(--pink)">${herScore}</strong> partículas rosas no seu domínio<br>e aniquilou <strong style="color:var(--blue)">${herAnnihilations}</strong> azuis invasoras.`;
+  openModal('winModal');
+}
+
 function checkWin() {
   if (gameOver) return;
-  if (myScore >= WIN_SCORE || herScore >= WIN_SCORE) {
+  if (myScore >= WIN_SCORE) {
     gameOver = true;
-    const iWon = myScore >= WIN_SCORE;
-    document.getElementById('winTitle').textContent = iWon
-      ? '🏆 TIAGO VENCEU!' : '🏆 JULIA VENCEU!';
-    document.getElementById('winMessage').innerHTML = iWon
-      ? `Tiago coletou <strong style="color:var(--blue)">${myScore}</strong> azuis<br>e aniquilou <strong style="color:var(--pink)">${myAnnihilations}</strong> rosas.`
-      : `Julia coletou <strong style="color:var(--pink)">${herScore}</strong> rosas<br>e aniquilou <strong style="color:var(--blue)">${herAnnihilations}</strong> azuis.`;
-    openModal('winModal');
+    showWinModal('blue');
+  } else if (herScore >= WIN_SCORE) {
+    gameOver = true;
+    showWinModal('pink');
   }
 }
 
@@ -602,7 +601,7 @@ document.getElementById('btnRestart').addEventListener('click', () => {
 });
 
 /* ============================================================
-   MINIMIZADOR DOS CONTROLES (ao lado do painel do laboratório)
+   MINIMIZADOR DOS CONTROLES
    ============================================================ */
 const controlsBar = document.getElementById('controlsBar');
 const btnToggleControls = document.getElementById('btnToggleControls');
@@ -640,11 +639,31 @@ class Particle {
     this.dead = false;
   }
   update(dt) {
-    this.x += this.vx * dt;
-    this.y += this.vy * dt;
-    if (this.gravity) this.vy += this.gravity * dt;
+    // PAREDE CENTRAL IMPERMEÁVEL
+    const wallX = W / 2;
+    const nx = this.x + this.vx * dt;
+
+    if (this.color === BLUE) {
+      if (this.x < wallX && nx + this.r > wallX) {
+        this.x = wallX - this.r;
+        this.vx = -Math.abs(this.vx);
+      } else {
+        this.x = nx;
+      }
+    } else {
+      if (this.x > wallX && nx - this.r < wallX) {
+        this.x = wallX + this.r;
+        this.vx = Math.abs(this.vx);
+      } else {
+        this.x = nx;
+      }
+    }
+
     if (this.x < this.r) { this.x = this.r; this.vx = Math.abs(this.vx); }
     else if (this.x > W - this.r) { this.x = W - this.r; this.vx = -Math.abs(this.vx); }
+
+    this.y += this.vy * dt;
+    if (this.gravity) this.vy += this.gravity * dt;
     if (this.y < this.r) { this.y = this.r; this.vy = Math.abs(this.vy); }
     else if (this.y > H - this.r && !this.gravity) { this.y = H - this.r; this.vy = -Math.abs(this.vy); }
   }
@@ -673,6 +692,22 @@ function countColors() {
 function updateCounter() {
   const { b, p } = countColors();
   counterEl.textContent = `💙 ${b} · 💗 ${p}`;
+}
+
+function recountScores() {
+  const wallX = W / 2;
+  let blueInBlue = 0;
+  let pinkInPink = 0;
+  for (const p of particles) {
+    if (p.color === BLUE && p.x < wallX) blueInBlue++;
+    else if (p.color === PINK && p.x > wallX) pinkInPink++;
+  }
+  if (blueInBlue !== myScore || pinkInPink !== herScore) {
+    myScore = blueInBlue;
+    herScore = pinkInPink;
+    updateDuelHUD();
+    checkWin();
+  }
 }
 
 /* ============================================================
@@ -714,6 +749,7 @@ function updateEffects() {
 /* ============================================================
    ANIQUILAÇÃO POR COLISÃO
    ============================================================ */
+// ✨ ALTERAÇÃO: agora só aniquila cores OPOSTAS. Cores iguais convivem.
 const ANNIHILATION_CELL = 24;
 function resolveAnnihilations() {
   const n = particles.length;
@@ -739,14 +775,18 @@ function resolveAnnihilations() {
           const j = bucket[k];
           if (j <= i) continue;
           const q = particles[j];
-          if (q.dead || q.color !== p.color) continue;
+          if (q.dead) continue;
+          // ✨ ALTERAÇÃO: pula se as cores forem IGUAIS (antes era !== )
+          if (q.color === p.color) continue;
           const ddx = p.x - q.x, ddy = p.y - q.y;
           const rr = p.r + q.r;
           if (ddx * ddx + ddy * ddy <= rr * rr) {
             p.dead = true; q.dead = true; anyDead = true;
             const mx = (p.x + q.x) * 0.5, my = (p.y + q.y) * 0.5;
-            spawnRipple(mx, my, p.color, 40, 2.5);
-            spawnRipple(mx, my, '#ffffff', 22, 1.5);
+            // Cor neutra (branca) para o efeito, já que agora são cores diferentes
+            spawnRipple(mx, my, '#ffffff', 40, 2.5);
+            spawnRipple(mx, my, p.color, 30, 1.8);
+            spawnRipple(mx, my, q.color, 30, 1.8);
             break;
           }
         }
@@ -857,8 +897,10 @@ function applyPlayerClick(mx, my, player, fromRemote, broadcastNow) {
     return;
   }
 
-  let collected = 0, annihilated = 0;
+  const enemyColor = (player === 'blue') ? PINK : BLUE;
   const baseReach = fromRemote ? 32 : 14;
+
+  let annihilated = 0;
 
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
@@ -866,77 +908,47 @@ function applyPlayerClick(mx, my, player, fromRemote, broadcastNow) {
     const reach = p.r + baseReach;
     if (dx * dx + dy * dy > reach * reach) continue;
 
-    const isCollectable = (player === 'blue') ? (p.color === BLUE) : (p.color === PINK);
-
-    if (isCollectable) {
-      collected++;
-      spawnRipple(p.x, p.y, p.color, 32, 2.2);
-      spawnRipple(p.x, p.y, '#ffffff', 20, 1.4);
-    } else {
+    if (p.color === enemyColor) {
       annihilated++;
       spawnRipple(p.x, p.y, '#ffffff', 44, 3);
       spawnRipple(p.x, p.y, p.color, 30, 2);
+      particles.splice(i, 1);
     }
-    particles.splice(i, 1);
   }
 
-  if (collected > 0 || annihilated > 0) {
+  if (annihilated > 0) {
     if (player === 'blue') {
-      myScore += collected;
       myAnnihilations += annihilated;
-      if (collected > 0) { spawnFloatText(mx, my - 20, '+' + collected, BLUE); popPanel('blue'); }
-      if (annihilated > 0) spawnFloatText(mx, my + 4, '💔 ' + annihilated, PINK);
+      spawnFloatText(mx, my + 4, '💔 ' + annihilated, PINK);
     } else {
-      herScore += collected;
       herAnnihilations += annihilated;
-      if (collected > 0) { spawnFloatText(mx, my - 20, '+' + collected, PINK); popPanel('pink'); }
-      if (annihilated > 0) spawnFloatText(mx, my + 4, '💔 ' + annihilated, BLUE);
+      spawnFloatText(mx, my + 4, '💔 ' + annihilated, BLUE);
     }
-    updateDuelHUD();
-    updateCounter();
-    checkWin();
+  }
 
-    if (broadcastNow && myRole === 'host' && conn && conn.open) {
-      broadcastState();
-    }
-  } else {
-    // ✨ NOVO: clique em espaço vazio cria partículas — agora também
-    // quando o clique vem do convidado (fromRemote = true). Assim a Julia
-    // ganha o mesmo poder que o host de gerar partículas clicando no vazio.
-    createBurst(mx, my, 8);
-    if (broadcastNow && myRole === 'host' && conn && conn.open) {
-      broadcastState();
-    }
+  createBurst(mx, my, 8);
+
+  if (broadcastNow && myRole === 'host' && conn && conn.open) {
+    broadcastState();
   }
 }
 
 function predictGuestVisuals(mx, my) {
-  let collected = 0, annihilated = 0;
+  let annihilated = 0;
   const reachExtra = 32;
   for (const p of particles) {
     const dx = p.x - mx, dy = p.y - my;
     const reach = p.r + reachExtra;
     if (dx * dx + dy * dy > reach * reach) continue;
-    if (p.color === PINK) {
-      collected++;
-      spawnRipple(p.x, p.y, PINK, 32, 2.2);
-      spawnRipple(p.x, p.y, '#ffffff', 20, 1.4);
-    } else {
+    if (p.color === BLUE) {
       annihilated++;
       spawnRipple(p.x, p.y, '#ffffff', 44, 3);
       spawnRipple(p.x, p.y, BLUE, 30, 2);
     }
   }
-  if (collected > 0) {
-    spawnFloatText(mx, my - 20, '+' + collected, PINK);
-    popPanel('pink');
-  }
   if (annihilated > 0) {
     spawnFloatText(mx, my + 4, '💔 ' + annihilated, BLUE);
-  }
-  // ✨ NOVO: feedback local para clique no vazio (as partículas de verdade
-  // serão criadas pelo host e voltarão pelo broadcast do estado).
-  if (collected === 0 && annihilated === 0) {
+  } else {
     spawnRipple(mx, my, '#ffffff', 26, 1.5);
   }
 }
@@ -971,6 +983,9 @@ canvas.addEventListener('pointerdown', (e) => {
 
 function broadcastState() {
   if (!conn || !conn.open) return;
+  const winner = gameOver
+    ? (myScore >= WIN_SCORE ? 'blue' : 'pink')
+    : null;
   const payload = {
     type: 'state',
     ps: particles.map(p => [
@@ -980,6 +995,7 @@ function broadcastState() {
       p.color === BLUE ? 0 : 1,
     ]),
     s: [myScore, herScore, myAnnihilations, herAnnihilations],
+    w: winner,
   };
   conn.send(payload);
 }
@@ -995,6 +1011,11 @@ function applyRemoteState(data) {
   [myScore, herScore, myAnnihilations, herAnnihilations] = data.s;
   updateDuelHUD();
   updateCounter();
+
+  if (data.w && !gameOver) {
+    gameOver = true;
+    showWinModal(data.w);
+  }
 }
 
 function setupConn() {
@@ -1008,8 +1029,6 @@ function setupConn() {
   conn.on('data', (data) => {
     if (myRole === 'host') {
       if (data.type === 'click') {
-        // ✨ NOVO: mesmo se o clique do convidado cair no vazio, o host agora
-        // cria as partículas correspondentes (ver applyPlayerClick).
         applyPlayerClick(data.x * W, data.y * H, 'pink', true, true);
       } else if (data.type === 'rain') {
         createRain(120);
@@ -1159,7 +1178,7 @@ document.getElementById('btnCopyURL').addEventListener('click', async () => {
 })();
 
 /* ============================================================
-   BOTÕES — ações iguais para host e guest
+   BOTÕES
    ============================================================ */
 document.getElementById('btnRain').addEventListener('click', () => {
   if (myRole === 'guest') {
@@ -1220,6 +1239,7 @@ function loop(now) {
       if (p.gravity && p.y > H + 50) { particles.splice(i, 1); updateCounter(); continue; }
       p.draw(ctx);
     }
+    recountScores();
     if (myRole === 'host' && conn && conn.open) {
       broadcastAcc += dt * 16.67;
       if (broadcastAcc >= 33) { broadcastAcc = 0; broadcastState(); }
