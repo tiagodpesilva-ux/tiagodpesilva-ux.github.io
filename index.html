@@ -899,8 +899,14 @@ function applyPlayerClick(mx, my, player, fromRemote, broadcastNow) {
     if (broadcastNow && myRole === 'host' && conn && conn.open) {
       broadcastState();
     }
-  } else if (!fromRemote) {
+  } else {
+    // ✨ NOVO: clique em espaço vazio cria partículas — agora também
+    // quando o clique vem do convidado (fromRemote = true). Assim a Julia
+    // ganha o mesmo poder que o host de gerar partículas clicando no vazio.
     createBurst(mx, my, 8);
+    if (broadcastNow && myRole === 'host' && conn && conn.open) {
+      broadcastState();
+    }
   }
 }
 
@@ -927,6 +933,11 @@ function predictGuestVisuals(mx, my) {
   }
   if (annihilated > 0) {
     spawnFloatText(mx, my + 4, '💔 ' + annihilated, BLUE);
+  }
+  // ✨ NOVO: feedback local para clique no vazio (as partículas de verdade
+  // serão criadas pelo host e voltarão pelo broadcast do estado).
+  if (collected === 0 && annihilated === 0) {
+    spawnRipple(mx, my, '#ffffff', 26, 1.5);
   }
 }
 
@@ -997,6 +1008,8 @@ function setupConn() {
   conn.on('data', (data) => {
     if (myRole === 'host') {
       if (data.type === 'click') {
+        // ✨ NOVO: mesmo se o clique do convidado cair no vazio, o host agora
+        // cria as partículas correspondentes (ver applyPlayerClick).
         applyPlayerClick(data.x * W, data.y * H, 'pink', true, true);
       } else if (data.type === 'rain') {
         createRain(120);
