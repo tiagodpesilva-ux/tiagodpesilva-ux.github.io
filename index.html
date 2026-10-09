@@ -559,6 +559,7 @@ const SPAWN_COUNT = 2;              // partículas criadas por toque
 const ENERGY_PER_KILL = 1;          // energia ganha ao aniquilar uma partícula adversária
 const HIT_TOLERANCE_LOCAL = 10;     // folga de mira (px) para quem é o host
 const HIT_TOLERANCE_REMOTE = 24;    // folga maior para o convidado (compensa a latência)
+const HIT_TOUCH_BONUS = 14;         // folga extra quando o toque é de dedo (celular/tablet)
 const energy = { blue: ENERGY_MAX, pink: ENERGY_MAX };
 // só libera a criação quando a barra enche por completo; trava de novo quando zera
 const ready = { blue: true, pink: true };
@@ -975,13 +976,13 @@ function findParticleAt(mx, my, tol) {
 
 // ✨ NOVO: tocar em partícula (qualquer cor, qualquer lado) aniquila;
 // tocar no vazio do SEU domínio cria partículas e gasta energia.
-function applyPlayerClick(mx, my, player, fromRemote, broadcastNow) {
+function applyPlayerClick(mx, my, player, fromRemote, broadcastNow, touch = false) {
   if (gameOver) return;
 
   const ownColor = player === 'blue' ? BLUE : PINK;
   const enemyColor = player === 'blue' ? PINK : BLUE;
   const inOwnDomain = player === 'blue' ? (mx < W / 2) : (mx > W / 2);
-  const tol = fromRemote ? HIT_TOLERANCE_REMOTE : HIT_TOLERANCE_LOCAL;
+  const tol = (fromRemote ? HIT_TOLERANCE_REMOTE : HIT_TOLERANCE_LOCAL) + (touch ? HIT_TOUCH_BONUS : 0);
 
   const hit = findParticleAt(mx, my, tol);
   if (hit >= 0) {
@@ -1018,8 +1019,8 @@ function applyPlayerClick(mx, my, player, fromRemote, broadcastNow) {
 }
 
 // previsão visual no convidado (o host é quem decide de verdade)
-function predictGuestVisuals(mx, my) {
-  const hit = findParticleAt(mx, my, HIT_TOLERANCE_REMOTE);
+function predictGuestVisuals(mx, my, touch = false) {
+  const hit = findParticleAt(mx, my, HIT_TOLERANCE_REMOTE + (touch ? HIT_TOUCH_BONUS : 0));
   if (hit >= 0) {
     const p = particles[hit];
     spawnRipple(p.x, p.y, '#ffffff', 44, 3);
@@ -1054,27 +1055,28 @@ canvas.addEventListener('pointerdown', (e) => {
   const rect = canvas.getBoundingClientRect();
   const mx = e.clientX - rect.left;
   const my = e.clientY - rect.top;
+  const touch = e.pointerType === 'touch' || e.pointerType === 'pen';
 
   if (myRole === 'solo') {
     // modo treino: acertar uma partícula conta sempre como ataque do lado oposto
     // (assim dá para testar o ganho de energia); no vazio, o lado do clique decide quem cria
-    const hit = findParticleAt(mx, my, HIT_TOLERANCE_LOCAL);
+    const hit = findParticleAt(mx, my, HIT_TOLERANCE_LOCAL + (touch ? HIT_TOUCH_BONUS : 0));
     const who = hit >= 0
       ? (particles[hit].color === BLUE ? 'pink' : 'blue')
       : (mx < W / 2 ? 'blue' : 'pink');
-    applyPlayerClick(mx, my, who, false, false);
+    applyPlayerClick(mx, my, who, false, false, touch);
     return;
   }
 
   if (myRole === 'host') {
-    applyPlayerClick(mx, my, 'blue', false, false);
+    applyPlayerClick(mx, my, 'blue', false, false, touch);
     return;
   }
 
-  predictGuestVisuals(mx, my);
+  predictGuestVisuals(mx, my, touch);
 
   if (conn && conn.open) {
-    conn.send({ type: 'click', x: mx / W, y: my / H });
+    conn.send({ type: 'click', x: mx / W, y: my / H, t: touch ? 1 : 0 });
   }
 });
 
@@ -1179,7 +1181,7 @@ function setupConn() {
   conn.on('data', (data) => {
     if (myRole === 'host') {
       if (data.type === 'click') {
-        applyPlayerClick(data.x * W, data.y * H, 'pink', true, true);
+        applyPlayerClick(data.x * W, data.y * H, 'pink', true, true, !!data.t);
       } else if (data.type === 'rain') {
         createRain(120);
         broadcastState();
