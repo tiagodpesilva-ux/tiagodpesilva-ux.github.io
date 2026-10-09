@@ -37,10 +37,6 @@ body {
 h1 { font-size: 1.4rem; margin-bottom: 0.5rem; text-align: center; z-index: 10; position: relative; }
 .subtitle { color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem; z-index: 10; position: relative; text-align: center; }
 
-/* ============================================================
-   😈 DEMÔNIOS COLORIDOS — Tiago (azul) vs Julia (rosa)
-   O emoji original é arroxeado; filtros CSS recolorem sem trocar de ícone.
-   ============================================================ */
 .devil-blue {
   display: inline-block;
   filter: hue-rotate(200deg) saturate(1.5) brightness(1.2);
@@ -73,34 +69,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 #btnOnline {
   background: linear-gradient(135deg, rgba(137,180,250,0.25), rgba(245,194,231,0.25));
   border-color: rgba(245,194,231,0.5);
-}
-
-#btnOnlineFixed {
-  position: fixed;
-  top: 5.5rem;
-  right: 1rem;
-  z-index: 50;
-  background: linear-gradient(135deg, #89b4fa, #f5c2e7);
-  color: #1e1e2e;
-  font-weight: 700;
-  padding: 0.75rem 1.2rem;
-  font-size: 0.9rem;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  box-shadow: 0 0 24px rgba(245, 194, 231, 0.6);
-  animation: pulseOnline 2s ease-in-out infinite;
-  font-family: system-ui, -apple-system, sans-serif;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-#btnOnlineFixed:hover { transform: scale(1.05); }
-#btnOnlineFixed:active { transform: scale(0.98); }
-
-@keyframes pulseOnline {
-  0%, 100% { box-shadow: 0 0 24px rgba(245, 194, 231, 0.6); }
-  50%      { box-shadow: 0 0 42px rgba(137, 180, 250, 0.95); }
+  font-weight: 600;
 }
 
 #canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: auto; }
@@ -345,7 +314,6 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   button { padding: 0.45rem 0.7rem; font-size: 0.75rem; }
   .counter { font-size: 0.68rem; padding: 0.3rem 0.6rem; }
   .status-pill { font-size: 0.65rem; top: 2.8rem; padding: 0.25rem 0.55rem; }
-  #btnOnlineFixed { top: 4.9rem; padding: 0.55rem 0.85rem; font-size: 0.78rem; }
 
   .duel-hud { bottom: auto; top: 6.5rem; padding: 0 0.5rem; }
   .duel-panel { min-width: 0; padding: 0.45rem 0.65rem; border-radius: 10px; }
@@ -367,16 +335,13 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 <p class="subtitle">Dois domínios, duas cores, uma disputa cósmica ✨</p>
 
 <div class="controls">
-  <button id="btnOnline">🌐 Jogar Online (2 celulares)</button>
+  <button id="btnOnline">🌐 Jogar Online</button>
   <button id="btnRain">🌧️ Chuva de partículas</button>
   <button id="btnClear">🧹 Limpar tudo</button>
   <button id="btnWishes">💫 Laboratório dos Desejos</button>
   <button id="btnStar">⭐ Ver estrela</button>
   <button id="btnExperiments">🧪 Experimentos criativos</button>
 </div>
-
-<!-- Botão flutuante de emergência, sempre visível -->
-<button id="btnOnlineFixed" title="Jogar em dois aparelhos">🌐 Jogar Online</button>
 
 <canvas id="canvas"></canvas>
 <div class="counter" id="counter">💙 0 · 💗 0</div>
@@ -423,7 +388,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 <div class="modal" id="onlineModal">
   <div class="modal-content" style="position: relative; text-align: center;">
     <button class="modal-close" data-close="onlineModal">✕</button>
-    <h2>🌐 Jogar Online (2 aparelhos)</h2>
+    <h2>🌐 Jogar Online</h2>
     <div class="status-line" id="onlineStatusLine">
       <span class="dot"></span>
       <span id="onlineStatusText">Preparando sala...</span>
@@ -768,6 +733,19 @@ let isOnline = false;
 let myRole = 'solo';
 let broadcastAcc = 0;
 
+// Configuração PeerJS com STUN do Google (mais confiável que o padrão)
+const PEER_CONFIG = {
+  debug: 2,
+  config: {
+    iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'stun:stun2.l.google.com:19302' },
+      { urls: 'stun:stun3.l.google.com:19302' },
+    ]
+  }
+};
+
 const statusPill = document.getElementById('statusPill');
 const statusText = document.getElementById('statusText');
 
@@ -779,25 +757,19 @@ function setStatus(text, kind) {
   statusPill.classList.add('show');
 }
 
-/* --- Rótulos dos painéis por papel ---
-   Tiago é SEMPRE o azul (esquerda). Julia é SEMPRE a rosa (direita).
-   Só muda quem está na frente de cada tela. */
 function updateDuelLabels() {
   const blueName = document.getElementById('blueName');
   const pinkName = document.getElementById('pinkName');
 
   if (myRole === 'guest') {
-    // Esta tela é da Julia — ela vê "JULIA 😈" no painel rosa (direita)
     blueName.innerHTML = '<span class="devil-blue">😈</span> TIAGO';
     pinkName.innerHTML = 'JULIA <span class="devil-pink">😈</span> (você)';
   } else {
-    // Tela do Tiago
     blueName.innerHTML = '<span class="devil-blue">😈</span> TIAGO (você)';
     pinkName.innerHTML = 'JULIA <span class="devil-pink">😈</span>';
   }
 }
 
-/* --- Aplicação de um clique --- */
 function applyPlayerClick(mx, my, player, fromRemote) {
   if (gameOver) return;
 
@@ -849,7 +821,6 @@ function applyPlayerClick(mx, my, player, fromRemote) {
   }
 }
 
-/* --- Cliques locais --- */
 canvas.addEventListener('pointerdown', (e) => {
   if (gameOver) return;
   const rect = canvas.getBoundingClientRect();
@@ -862,19 +833,16 @@ canvas.addEventListener('pointerdown', (e) => {
   }
 
   if (myRole === 'host') {
-    // Host é SEMPRE o Tiago (azul). Só age no domínio esquerdo.
     applyPlayerClick(mx, my, 'blue', false);
     return;
   }
 
-  // Guest é SEMPRE a Julia (rosa). Aplica localmente + envia pro host.
   applyPlayerClick(mx, my, 'pink', false);
   if (conn && conn.open) {
     conn.send({ type: 'click', x: mx / W, y: my / H });
   }
 });
 
-/* --- Broadcast host → guest --- */
 function broadcastState() {
   if (!conn || !conn.open) return;
   const payload = {
@@ -905,7 +873,8 @@ function applyRemoteState(data) {
 
 function setupConn() {
   conn.on('open', () => {
-    setStatus('Conectada! Boa sorte, Julia 💜', 'online');
+    console.log('[peer] ✅ conexão aberta!');
+    setStatus('Conectada! Boa sorte 💜', 'online');
     if (myRole === 'guest') conn.send({ type: 'hello' });
     if (myRole === 'host' && particles.length < 40) createRain(80);
   });
@@ -919,11 +888,15 @@ function setupConn() {
   });
 
   conn.on('close', () => {
+    console.log('[peer] ❌ conexão fechada');
     setStatus('Conexão perdida 💔', 'offline');
     if (myRole === 'guest') { particles.length = 0; updateCounter(); }
   });
 
-  conn.on('error', () => setStatus('Erro na conexão', 'offline'));
+  conn.on('error', (err) => {
+    console.error('[peer] erro na conexão:', err);
+    setStatus('Erro na conexão', 'offline');
+  });
 }
 
 function startHosting(sala) {
@@ -932,15 +905,23 @@ function startHosting(sala) {
   updateDuelLabels();
   setStatus('Aguardando Julia entrar...', 'waiting');
 
-  peer = new Peer(sala);
-  peer.on('open', () => setStatus('Sala pronta. Compartilhe o link!', 'waiting'));
+  console.log('[host] criando Peer com id:', sala);
+  peer = new Peer(sala, PEER_CONFIG);
+
+  peer.on('open', (id) => {
+    console.log('[host] ✅ Peer aberto com id:', id);
+    setStatus('Sala pronta. Compartilhe o link!', 'waiting');
+  });
+
   peer.on('connection', (c) => {
+    console.log('[host] 📥 alguém conectou:', c.peer);
     if (conn) { c.close(); return; }
     conn = c;
     setupConn();
   });
+
   peer.on('error', (err) => {
-    console.error(err);
+    console.error('[host] ❌ erro:', err);
     setStatus('Erro: ' + err.type, 'offline');
     document.getElementById('onlineStatusLine').classList.add('error');
     document.getElementById('onlineStatusText').textContent = 'Erro: ' + err.type;
@@ -955,44 +936,58 @@ function startGuesting(sala) {
   particles.length = 0;
   updateCounter();
 
-  peer = new Peer();
-  peer.on('open', () => {
+  console.log('[guest] criando Peer anônimo...');
+  peer = new Peer(PEER_CONFIG);
+
+  peer.on('open', (id) => {
+    console.log('[guest] ✅ Peer aberto com id:', id);
+    console.log('[guest] conectando ao host:', sala);
     conn = peer.connect(sala);
     setupConn();
   });
+
   peer.on('error', (err) => {
-    console.error(err);
+    console.error('[guest] ❌ erro:', err);
     setStatus('Não consegui conectar 😢', 'offline');
   });
 }
 
-/* --- Abre modal Jogar Online --- */
+// Constrói o link de convite (usando #join= em vez de #host=)
+function buildInviteURL() {
+  const base = location.origin + location.pathname;
+  const params = new URLSearchParams(location.hash.replace('#', ''));
+  const sala = params.get('host') || params.get('join');
+  return base + '#join=' + sala;
+}
+
 function openOnlineModal() {
   if (isOnline) {
     openModal('onlineModal');
     document.getElementById('shareBox').style.display = 'block';
-    document.getElementById('shareURL').value = location.href;
     document.getElementById('onlineStatusLine').classList.add('ready');
-    document.getElementById('onlineStatusText').textContent =
-      myRole === 'host' ? 'Sala ativa — compartilhe o link com a Julia!' : 'Você é a convidada 💗';
+    if (myRole === 'host') {
+      document.getElementById('onlineStatusText').textContent = 'Sala ativa — compartilhe o link!';
+      document.getElementById('shareURL').value = buildInviteURL();
+    } else {
+      document.getElementById('onlineStatusText').textContent = 'Você é a convidada 💗';
+      document.getElementById('shareURL').value = location.href;
+    }
     return;
   }
 
   const sala = 'termo-' + Math.random().toString(36).slice(2, 8);
-  localStorage.setItem('termo-host-' + sala, '1');
-  history.replaceState(null, '', '#sala=' + sala);
+  history.replaceState(null, '', '#host=' + sala);
 
-  document.getElementById('shareURL').value = location.href;
-  document.getElementById('shareBox').style.display = 'block';
   document.getElementById('onlineStatusLine').classList.add('ready');
   document.getElementById('onlineStatusText').textContent = 'Sala ativa — compartilhe o link!';
+  document.getElementById('shareURL').value = buildInviteURL();
+  document.getElementById('shareBox').style.display = 'block';
   openModal('onlineModal');
 
   startHosting(sala);
 }
 
 document.getElementById('btnOnline').addEventListener('click', openOnlineModal);
-document.getElementById('btnOnlineFixed').addEventListener('click', openOnlineModal);
 
 document.getElementById('btnCopyURL').addEventListener('click', async () => {
   const input = document.getElementById('shareURL');
@@ -1006,17 +1001,22 @@ document.getElementById('btnCopyURL').addEventListener('click', async () => {
   }
 });
 
-/* --- Detecção automática de sala no load --- */
+// Detecta se a URL tem #host= ou #join= e age de acordo
 (function detectRoom() {
   const hash = location.hash.replace('#', '');
   if (!hash) return;
   const params = new URLSearchParams(hash);
-  const sala = params.get('sala');
-  if (!sala) return;
 
-  const isHost = localStorage.getItem('termo-host-' + sala) === '1';
-  if (isHost) startHosting(sala);
-  else startGuesting(sala);
+  const hostSala = params.get('host');
+  const joinSala = params.get('join');
+
+  if (hostSala) {
+    console.log('[sala] entrando como HOST:', hostSala);
+    startHosting(hostSala);
+  } else if (joinSala) {
+    console.log('[sala] entrando como GUEST:', joinSala);
+    startGuesting(joinSala);
+  }
 })();
 
 /* ============================================================
