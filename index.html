@@ -54,6 +54,7 @@ h1 { font-size: 1.4rem; margin-bottom: 0.5rem; text-align: center; z-index: 10; 
 .controls {
   display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center;
   z-index: 10; position: relative; margin-bottom: 0.5rem; max-width: 900px;
+  transition: all 0.25s ease;
 }
 
 button {
@@ -70,6 +71,21 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   background: linear-gradient(135deg, rgba(137,180,250,0.25), rgba(245,194,231,0.25));
   border-color: rgba(245,194,231,0.5);
   font-weight: 600;
+}
+
+/* Botão que minimiza/expande os controles */
+#btnToggleControls {
+  background: linear-gradient(135deg, rgba(137,180,250,0.35), rgba(245,194,231,0.35));
+  border-color: rgba(245,194,231,0.6);
+  font-weight: 700;
+  min-width: 44px;
+  padding: 0.6rem 0.8rem;
+  font-size: 1rem;
+}
+
+/* Quando a barra está colapsada, esconde todos os botões exceto o toggle */
+#controlsBar.collapsed > button:not(#btnToggleControls) {
+  display: none;
 }
 
 #canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: auto; }
@@ -334,7 +350,8 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 <h1>Tiago <span class="devil-blue">😈</span> vs Julia <span class="devil-pink">😈</span></h1>
 <p class="subtitle">Dois domínios, duas cores, uma disputa cósmica ✨</p>
 
-<div class="controls">
+<div class="controls" id="controlsBar">
+  <button id="btnToggleControls" title="Minimizar controles">−</button>
   <button id="btnOnline">🌐 Jogar Online</button>
   <button id="btnRain">🌧️ Chuva de partículas</button>
   <button id="btnClear">🧹 Limpar tudo</button>
@@ -545,6 +562,19 @@ document.getElementById('btnRestart').addEventListener('click', () => {
 });
 
 /* ============================================================
+   MINIMIZADOR DOS CONTROLES
+   ============================================================ */
+const controlsBar = document.getElementById('controlsBar');
+const btnToggleControls = document.getElementById('btnToggleControls');
+
+btnToggleControls.addEventListener('click', () => {
+  controlsBar.classList.toggle('collapsed');
+  const collapsed = controlsBar.classList.contains('collapsed');
+  btnToggleControls.textContent = collapsed ? '☰' : '−';
+  btnToggleControls.title = collapsed ? 'Mostrar controles' : 'Minimizar controles';
+});
+
+/* ============================================================
    LABORATÓRIO
    ============================================================ */
 const BASE_TEMPERATURE = 300;
@@ -733,7 +763,6 @@ let isOnline = false;
 let myRole = 'solo';
 let broadcastAcc = 0;
 
-// Configuração PeerJS com STUN do Google (mais confiável que o padrão)
 const PEER_CONFIG = {
   debug: 2,
   config: {
@@ -770,7 +799,14 @@ function updateDuelLabels() {
   }
 }
 
-function applyPlayerClick(mx, my, player, fromRemote) {
+/* ------------------------------------------------------------
+   Aplicação de clique.
+   fromRemote = clique veio do guest (via rede) e está sendo
+                aplicado pela primeira vez no host.
+   reachExtra = margem adicional de detecção (para compensar
+                atraso de rede quando fromRemote === true)
+   ------------------------------------------------------------ */
+function applyPlayerClick(mx, my, player, fromRemote, broadcastNow) {
   if (gameOver) return;
 
   const inOwnDomain = (player === 'blue') ? (mx < W / 2) : (mx > W / 2);
@@ -780,11 +816,13 @@ function applyPlayerClick(mx, my, player, fromRemote) {
   }
 
   let collected = 0, annihilated = 0;
+  // Raio de detecção — maior pra cliques remotos (rede + partícula se moveu)
+  const baseReach = fromRemote ? 32 : 14;
 
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
     const dx = p.x - mx, dy = p.y - my;
-    const reach = p.r + 12;
+    const reach = p.r + baseReach;
     if (dx * dx + dy * dy > reach * reach) continue;
 
     const isCollectable = (player === 'blue') ? (p.color === BLUE) : (p.color === PINK);
@@ -816,7 +854,14 @@ function applyPlayerClick(mx, my, player, fromRemote) {
     updateDuelHUD();
     updateCounter();
     checkWin();
+
+    // Host: se foi um clique remoto, transmite o estado imediatamente
+    // para reduzir o delay percebido pelo guest.
+    if (broadcastNow && myRole === 'host' && conn && conn.open) {
+      broadcastState();
+    }
   } else if (!fromRemote) {
+    // Clique no vazio — pequena explosão decorativa
     createBurst(mx, my, 8);
   }
 }
@@ -827,17 +872,33 @@ canvas.addEventListener('pointerdown', (e) => {
   const mx = e.clientX - rect.left;
   const my = e.clientY - rect.top;
 
+  // -------- MODO SOLO: dois lados no mesmo aparelho --------
   if (myRole === 'solo') {
-    applyPlayerClick(mx, my, mx < W / 2 ? 'blue' : 'pink', false);
+    applyPlayerClick(mx, my, mx < W / 2 ? 'blue' : 'pink', false, false);
     return;
   }
 
+  // -------- HOST (Tiago): só age no domínio esquerdo --------
   if (myRole === 'host') {
-    applyPlayerClick(mx, my, 'blue', false);
+    applyPlayerClick(mx, my, 'blue', false, false);
     return;
   }
 
-  applyPlayerClick(mx, my, 'pink', false);
+  // -------- GUEST (Julia): NÃO aplica localmente --------
+  // Aplica só um feedback visual (ripple) e envia o clique pro host.
+  // O host processa e devolve o estado atualizado — assim não há
+  // "ressurreição" da partícula por estados antigos chegando fora de ordem.
+  if (mx <= W / 2) {
+    // Tocou no lado errado (lado do Tiago) — só um ripple neutro
+    spawnRipple(mx, my, '#ffffff', 20, 1);
+    return;
+  }
+
+  // Feedback visual imediato no lado do guest
+  spawnRipple(mx, my, PINK, 30, 2);
+  spawnRipple(mx, my, '#ffffff', 18, 1.2);
+
+  // Envia o clique pro host
   if (conn && conn.open) {
     conn.send({ type: 'click', x: mx / W, y: my / H });
   }
@@ -881,7 +942,9 @@ function setupConn() {
 
   conn.on('data', (data) => {
     if (myRole === 'host') {
-      if (data.type === 'click') applyPlayerClick(data.x * W, data.y * H, 'pink', true);
+      if (data.type === 'click') {
+        applyPlayerClick(data.x * W, data.y * H, 'pink', true, true);
+      }
     } else {
       if (data.type === 'state') applyRemoteState(data);
     }
@@ -952,7 +1015,6 @@ function startGuesting(sala) {
   });
 }
 
-// Constrói o link de convite (usando #join= em vez de #host=)
 function buildInviteURL() {
   const base = location.origin + location.pathname;
   const params = new URLSearchParams(location.hash.replace('#', ''));
@@ -1001,7 +1063,6 @@ document.getElementById('btnCopyURL').addEventListener('click', async () => {
   }
 });
 
-// Detecta se a URL tem #host= ou #join= e age de acordo
 (function detectRoom() {
   const hash = location.hash.replace('#', '');
   if (!hash) return;
