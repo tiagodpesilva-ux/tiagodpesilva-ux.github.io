@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Demônio de Maxwell · Termodinâmica Sombria</title>
+<style>
+:root{color-scheme:dark;--bg:#07060a;--ink:#e8dfe2;--mut:#8a7c82;--blood:#7a5cff;--ember:#ff6a2b;--ice:#58b8e0;--pan:rgba(18,12,16,.85);--line:#2a1f55;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{height:100%;background:var(--bg);color:var(--ink);font:13px ui-monospace,Menlo,Consolas,monospace;overflow:hidden;user-select:none;touch-action:manipulation}
+canvas#c{position:fixed;inset:0;width:100%;height:100%}
+.pan{position:fixed;background:var(--pan);border:1px solid var(--line);border-radius:10px;padding:.55rem .7rem;backdrop-filter:blur(6px)}
+#hud{top:calc(.5rem + env(safe-area-inset-top,0px));left:.5rem;width:236px;max-height:calc(100% - 6rem);overflow-y:auto;border-color:#3a2a7a;box-shadow:0 0 22px rgba(122,92,255,.25)}
+#hh{display:flex;align-items:center;justify-content:space-between;gap:.4rem;font-weight:700;letter-spacing:.06em;color:#b9a6ff}
+#hh span{display:flex;gap:.3rem}
+#hh button{padding:.2rem .55rem;font-size:13px;line-height:1}
+.sep{height:1px;background:var(--line);margin:.55rem 0 .1rem}
+body.min #hudBody,body.min #msg{display:none}
+#gm{position:fixed;inset:0;background:rgba(3,2,8,.84);display:none;align-items:center;justify-content:center;z-index:50;padding:1rem}
+#gm.open{display:flex}
+#gb{background:#0d0a1c;border:1px solid #3a2a7a;border-radius:14px;padding:1.2rem;max-width:580px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 0 40px rgba(122,92,255,.35);line-height:1.55}
+#gb h2{color:#b9a6ff;margin-bottom:.4rem}
+#gb h3{color:#6fd3ff;margin:.9rem 0 .25rem;font-size:13px}
+#gb p,#gb li{font-size:12.5px}
+#gb ul{padding-left:1.1rem}
+#gb code{color:#b9a6ff}
+.lbl{display:flex;justify-content:space-between;color:var(--mut);font-size:11px;margin-top:.35rem}
+.lbl b{color:var(--ink);font-weight:600}
+.bar{height:6px;background:#1a0f14;border-radius:3px;overflow:hidden;margin-top:2px}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blood),var(--ember))}
+#mem i{background:linear-gradient(90deg,#5b2a6b,var(--blood))}
+.t{position:fixed;top:calc(7.2rem + env(safe-area-inset-top,0px));font-size:11px;color:var(--mut);transform:translateX(-50%);text-align:center;pointer-events:none;letter-spacing:.08em}
+.t b{display:block;font-size:15px;color:var(--ink)}
+#ctl{bottom:calc(.5rem + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;justify-content:center;max-width:96vw}
+button{background:#1d0e14;color:var(--ink);border:1px solid var(--blood);border-radius:8px;padding:.5rem .8rem;font:inherit;cursor:pointer}
+button:hover{background:var(--blood)}
+input[type=range]{accent-color:var(--blood);width:120px}
+#msg{position:fixed;bottom:calc(4.6rem + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);color:var(--mut);font-size:11px;text-align:center;width:92vw;pointer-events:none}
+#law{color:var(--ember);font-weight:700}
+@media(max-width:640px){#hud{width:190px;font-size:10px}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div class="pan" id="hud">
+  <div id="hh"><span>😈 LABORATÓRIO</span><span><button id="bG" title="Guia">📖</button><button id="bT" title="Minimizar">−</button></span></div>
+  <div id="hudBody">
+    <div class="lbl"><span>⚡ ENERGIA</span><b id="eV">100</b></div><div class="bar"><i id="eB"></i></div>
+    <div class="lbl"><span>🧠 MEMÓRIA (bits)</span><b id="mV">0/48</b></div><div class="bar" id="mem"><i id="mB"></i></div>
+    <div class="lbl"><span>🔍 medições</span><b id="nV">0</b></div>
+    <div class="sep"></div>
+    <div class="lbl"><span>🌡 T esquerda</span><b id="tl">—</b></div>
+    <div class="lbl"><span>🌡 T direita</span><b id="tr">—</b></div>
+    <div class="sep"></div>
+    <div class="lbl"><span style="color:var(--ice)">ΔS gás</span><b id="sg">0.00</b></div>
+    <div class="lbl"><span style="color:var(--ember)">ΔS total</span><b id="st">0.00</b></div>
+    <canvas id="g" width="220" height="64" style="width:100%;height:64px;margin-top:4px"></canvas>
+    <div class="lbl"><span>calor dissipado</span><b id="sd">0.00</b></div>
+    <div class="lbl"><span id="law">2ª Lei: intacta</span><span></span></div>
+  </div>
+</div>
+
+<div id="msg">Mantenha o demônio medindo: cada bit custa energia. Segure ESPAÇO ou toque na tela para abrir a porta às cegas.</div>
+
+<div class="pan" id="ctl">
+  <label>limiar v* <input type="range" id="vs" min="1" max="4" step="0.05" value="2.3"></label>
+  <button id="bE">🧹 Apagar memória</button>
+  <button id="bW">🔥 Extrair trabalho</button>
+  <button id="bR">↺ Reiniciar</button>
+</div>
+
+<div id="gm"><div id="gb">
+  <h2>📖 Guia rápido</h2>
+  <h3>🎯 Objetivo</h3>
+  <p>Você é o <b>Demônio de Maxwell</b>: tente separar as partículas rápidas (quentes, laranja) das lentas (frias, azuis) usando a portinha da parede central. Fria à esquerda, quente à direita. Spoiler: você nunca vai vencer a 2ª Lei 😈</p>
+  <h3>🎮 Como jogar</h3>
+  <ul>
+   <li>O demônio <b>mede</b> cada partícula que chega perto da porta (raio roxo) e abre só para as certas: <b>rápidas indo à direita</b> e <b>lentas indo à esquerda</b>.</li>
+   <li><b>v*</b> (limiar) define o que conta como "rápida". Mexa nele para testar.</li>
+   <li><b>ESPAÇO</b> ou toque na tela: abre a porta às cegas (sem medir, só bagunça).</li>
+   <li><b>🧹 Apagar memória</b>: libera bits para continuar medindo, mas gasta energia e gera calor.</li>
+   <li><b>🔥 Extrair trabalho</b>: transforma a diferença de temperatura em energia, mas desfaz parte da separação.</li>
+   <li><b>−</b> no painel minimiza todas as informações; <b>↺</b> reinicia.</li>
+  </ul>
+  <h3>⚡ Energia e memória</h3>
+  <p>Cada medição custa 1 de energia e ocupa 1 bit (máx. 48). Sem energia ou com a memória cheia, o demônio fica cego e a porta fica fechada. A energia também volta devagar sozinha (0,6/s).</p>
+  <h3>🔬 A física por trás</h3>
+  <ul>
+   <li><b>Temperatura</b> = energia cinética média das partículas: <code>T = ⟨v²⟩</code> de cada lado.</li>
+   <li><b>Entropia do gás</b>: <code>S = Σ Nᵢ (ln Tᵢ − ln Nᵢ)</code>. Separar quente de frio faz <code>ΔS gás</code> cair, o que parece violar a 2ª Lei.</li>
+   <li><b>O truque do demônio</b>: ele precisa <i>saber</i> a velocidade de cada partícula. Medir grava informação, e informação é entropia: cada bit guardado soma <code>ln 2</code>.</li>
+   <li><b>Princípio de Landauer</b>: apagar 1 bit dissipa pelo menos <code>k·T·ln 2</code> de calor. É o custo de esquecer que salva a 2ª Lei.</li>
+   <li><b>Balanço</b>: <code>ΔS total = ΔS gás + bits·ln 2 + calor dissipado ≥ 0</code>. Você pode baixar o ΔS do gás, mas o total nunca desce.</li>
+   <li><b>Extrair trabalho</b> é uma máquina térmica: usa o gradiente, mas esfria o lado quente e esquenta o frio, aumentando o ΔS gás de novo.</li>
+  </ul>
+  <p style="margin-top:.9rem;text-align:center"><button id="bX">Entendi, voltar ao caos</button></p>
+</div></div>
+
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d'),gc=document.getElementById('g').getContext('2d');
+const $=id=>document.getElementById(id);
+let W,H,dpr=Math.min(window.devicePixelRatio||1,2),wallX,doorY,gapH=38;
+function resize(){W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);wallX=W/2;doorY=H*.6;ctx.fillStyle='#07060a';ctx.fillRect(0,0,W,H);}
+addEventListener('resize',resize);resize();
+
+const N=160,SIG=2,MEM=48,EMAX=100,COST=1,ERASE=1.5,LN2=Math.LN2;
+let P=[],energy,mem,bits,Sdiss,S0,hist,openAmt=0,manual=false,fx=[],look={x:0,y:0,l:0},best=0,t0=0;
+function mk(side){const u=1-Math.random(),v=Math.sqrt(-2*Math.log(u))*SIG,a=Math.random()*6.283;
+  return{x:side?wallX+10+Math.random()*(W/2-20):10+Math.random()*(W/2-20),y:20+Math.random()*(H-40),vx:Math.cos(a)*v,vy:Math.sin(a)*v,m:false,a:false,s:side}}
+function stats(){let nl=0,nr=0,kl=0,kr=0;for(const p of P){const v2=p.vx*p.vx+p.vy*p.vy;if(p.x<wallX){nl++;kl+=v2}else{nr++;kr+=v2}}
+  return{nl,nr,Tl:nl?kl/nl:0,Tr:nr?kr/nr:0}}
+function Sgas(){const s=stats();let S=0;if(s.nl)S+=s.nl*(Math.log(s.Tl)-Math.log(s.nl));if(s.nr)S+=s.nr*(Math.log(s.Tr)-Math.log(s.nr));return S}
+function reset(){P=[];for(let i=0;i<N;i++)P.push(mk(i%2));energy=EMAX;mem=0;bits=0;Sdiss=0;hist=[];fx=[];best=0;S0=Sgas();ctx.fillStyle='#07060a';ctx.fillRect(0,0,W,H)}
+reset();
+
+function mix(t){t=Math.max(0,Math.min(1,t));return`rgb(${Math.round(70+185*t)},${Math.round(150-60*t)},${Math.round(200-160*t)})`}
+
+function step(dt){
+  const vstar=+$('vs').value;let want=false,tgt=null;
+  for(const p of P){
+    const d=p.x-wallX,v=Math.hypot(p.vx,p.vy);
+    if(Math.abs(d)>110){p.m=false}
+    if(Math.abs(d)<90&&d*p.vx<0&&Math.abs(p.y-doorY)<gapH+40){
+      if(!p.m&&mem<MEM&&energy>=COST){p.m=true;energy-=COST;mem++;bits++;p.a=d<0?v>vstar:v<vstar;fx.push({x:p.x,y:p.y,l:1});look={x:p.x,y:p.y,l:1}}
+      if(p.m&&p.a&&Math.abs(d)<30)want=true;
+    }
+  }
+  const open=want||manual;
+  openAmt+=((open?1:0)-openAmt)*Math.min(1,.25*dt);
+  const passable=openAmt>.7;
+  for(const p of P){
+    const ox=p.x;p.x+=p.vx*dt;p.y+=p.vy*dt;
+    if((ox-wallX)*(p.x-wallX)<0){
+      if(!(passable&&Math.abs(p.y-doorY)<gapH)){p.x=ox;p.vx=-p.vx}else{p.m=false}
+    }
+    if(p.x<4){p.x=4;p.vx=Math.abs(p.vx)}else if(p.x>W-4){p.x=W-4;p.vx=-Math.abs(p.vx)}
+    if(p.y<4){p.y=4;p.vy=Math.abs(p.vy)}else if(p.y>H-4){p.y=H-4;p.vy=-Math.abs(p.vy)}
+  }
+  energy=Math.min(EMAX,energy+.6*dt/60);
+}
+
+function drawDemon(t){
+  const s=Math.max(.7,Math.min(1.25,H/720)),dy=doorY-gapH-90*s,sw=Math.sin(t*1.7)*10;
+  const ty=(doorY-gapH-dy)/s,dead=energy<COST;
+  ctx.save();ctx.translate(wallX,dy);ctx.scale(s,s);
+  ctx.shadowColor='#7a5cff';ctx.shadowBlur=dead?6:36;ctx.lineJoin='round';
+  ctx.strokeStyle='#7a5cff';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(8,92);ctx.bezierCurveTo(50+sw,120,90,95,72+sw,62);ctx.stroke();
+  ctx.fillStyle='#7a5cff';ctx.beginPath();ctx.moveTo(72+sw,62);ctx.lineTo(62+sw,66);ctx.lineTo(82+sw,76);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#2a1f55';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(14,46);ctx.quadraticCurveTo(36,66,4,ty);ctx.stroke();
+  ctx.strokeStyle='#7a5cff';ctx.lineWidth=2;ctx.fillStyle='#0d0820';
+  ctx.beginPath();ctx.ellipse(0,56,28,40,0,0,6.283);ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.arc(0,0,27,0,6.283);ctx.fillStyle='#120a2a';ctx.fill();ctx.stroke();
+  for(const m of[1,-1]){ctx.save();ctx.scale(m,1);ctx.fillStyle='#7a5cff';ctx.beginPath();
+    ctx.moveTo(14,-20);ctx.quadraticCurveTo(40,-30,32,-64);ctx.quadraticCurveTo(24,-40,6,-27);ctx.closePath();ctx.fill();ctx.restore()}
+  const lx=look.x-wallX,ly=look.y-dy,ln=Math.hypot(lx,ly)||1,px=lx/ln*2.6*look.l,py=ly/ln*2.6*look.l;
+  for(const m of[-1,1]){ctx.save();ctx.translate(m*10,-3);ctx.rotate(m*-.35);ctx.fillStyle=dead?'#3a3036':'#6fd3ff';ctx.shadowColor='#6fd3ff';ctx.shadowBlur=dead?0:14;
+    ctx.beginPath();ctx.ellipse(0,0,7,4.2,0,0,6.283);ctx.fill();ctx.fillStyle='#07060a';ctx.shadowBlur=0;
+    ctx.beginPath();ctx.ellipse(px,py*.5,1.6,3.2,0,0,6.283);ctx.fill();ctx.restore()}
+  ctx.strokeStyle=dead?'#4a3a40':'#6fd3ff';ctx.lineWidth=2;ctx.shadowBlur=0;ctx.beginPath();
+  if(dead){ctx.moveTo(-9,16);ctx.lineTo(9,16)}else{ctx.moveTo(-11,11);ctx.quadraticCurveTo(0,24,11,11)}ctx.stroke();
+  ctx.restore();return{x:wallX,y:dy}
+}
+
+function draw(t){
+  ctx.fillStyle='rgba(7,6,10,.28)';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='rgba(88,184,224,.025)';ctx.fillRect(0,0,wallX,H);
+  ctx.fillStyle='rgba(255,106,43,.03)';ctx.fillRect(wallX,0,W/2,H);
+  ctx.fillStyle='#0f0a24';ctx.strokeStyle='#3a2a7a';ctx.lineWidth=1;
+  ctx.fillRect(wallX-4,0,8,doorY-gapH);ctx.fillRect(wallX-4,doorY+gapH,8,H-doorY-gapH);
+  ctx.strokeRect(wallX-4,0,8,doorY-gapH);ctx.strokeRect(wallX-4,doorY+gapH,8,H-doorY-gapH);
+  const sh=gapH*2*(1-openAmt);
+  if(sh>1){ctx.save();ctx.shadowColor='#7a5cff';ctx.shadowBlur=14;ctx.fillStyle='#7a5cff';ctx.fillRect(wallX-2,doorY-sh/2,4,sh);ctx.restore()}
+  for(const p of P){const v=Math.hypot(p.vx,p.vy);ctx.save();ctx.fillStyle=ctx.shadowColor=mix((v-1)/5);ctx.shadowBlur=Math.min(v*2.5,14);
+    ctx.beginPath();ctx.arc(p.x,p.y,2.6,0,6.283);ctx.fill();
+    if(p.m&&Math.abs(p.x-wallX)<90){ctx.strokeStyle=p.a?'#ff6a2b':'#4a3a40';ctx.lineWidth=1;ctx.shadowBlur=0;ctx.beginPath();ctx.arc(p.x,p.y,6,0,6.283);ctx.stroke()}
+    ctx.restore()}
+  const e=drawDemon(t);
+  for(let i=fx.length-1;i>=0;i--){const f=fx[i];f.l-=.06;if(f.l<=0){fx.splice(i,1);continue}
+    ctx.save();ctx.globalAlpha=f.l;ctx.strokeStyle='#9d7bff';ctx.lineWidth=1.5;ctx.shadowColor='#9d7bff';ctx.shadowBlur=8;
+    ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.lineTo(f.x,f.y);ctx.stroke();ctx.beginPath();ctx.arc(f.x,f.y,10*(1.4-f.l),0,6.283);ctx.stroke();ctx.restore()}
+  look.l=Math.max(0,look.l-.02);
+}
+
+function graph(){
+  const w=220,h=64;gc.clearRect(0,0,w,h);if(hist.length<2)return;
+  let lo=0,hi=0;for(const q of hist){lo=Math.min(lo,q[0],q[1]);hi=Math.max(hi,q[0],q[1])}
+  const r=(hi-lo)||1,Y=v=>h-4-(v-lo)/r*(h-8);
+  gc.strokeStyle='#2a1f55';gc.beginPath();gc.moveTo(0,Y(0));gc.lineTo(w,Y(0));gc.stroke();
+  [[0,'#58b8e0'],[1,'#ff6a2b']].forEach(([k,c])=>{gc.strokeStyle=c;gc.lineWidth=1.5;gc.beginPath();
+    hist.forEach((q,i)=>{const x=i/(hist.length-1)*w;i?gc.lineTo(x,Y(q[k])):gc.moveTo(x,Y(q[k]))});gc.stroke()})
+}
+
+let fr=0,last=performance.now();
+function loop(now){
+  const dt=Math.min((now-last)/16.67,3);last=now;
+  step(dt);draw(now/1000);
+  if(++fr%10===0){
+    const s=stats(),dSg=Sgas()-S0,tot=dSg+mem*LN2+Sdiss;
+    best=Math.min(best,dSg);hist.push([dSg,tot]);if(hist.length>180)hist.shift();
+    $('eV').textContent=energy.toFixed(0);$('eB').style.width=energy/EMAX*100+'%';
+    $('mV').textContent=mem+'/'+MEM;$('mB').style.width=mem/MEM*100+'%';$('nV').textContent=bits;
+    $('sg').textContent=dSg.toFixed(2);$('st').textContent=tot.toFixed(2);$('sd').textContent=(Sdiss+mem*LN2).toFixed(2);
+    $('law').textContent=tot>=-1e-6?'2ª Lei: intacta ✓':'violação?! (erro numérico)';
+    $('tl').textContent=s.Tl.toFixed(1)+' · '+s.nl+' p';
+    $('tr').textContent=s.Tr.toFixed(1)+' · '+s.nr+' p';
+    graph();
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+$('bE').onclick=()=>{
+  const n=Math.min(mem,Math.floor(energy/ERASE));if(n<=0)return;
+  mem-=n;energy-=n*ERASE;Sdiss+=n*ERASE*LN2;
+  for(let i=0;i<5;i++)fx.push({x:wallX+(Math.random()-.5)*120,y:doorY-gapH-90+Math.random()*60,l:1});
+};
+$('bW').onclick=()=>{
+  const s=stats();if(s.Tr<=s.Tl)return;
+  energy=Math.min(EMAX,energy+(s.Tr-s.Tl)*5);
+  for(const p of P){const k=p.x<wallX?1.05:.95;p.vx*=k;p.vy*=k}
+};
+$('bR').onclick=reset;
+addEventListener('keydown',e=>{if(e.code==='Space'){manual=true;e.preventDefault()}});
+addEventListener('keyup',e=>{if(e.code==='Space')manual=false});
+cv.addEventListener('pointerdown',()=>manual=true);
+addEventListener('pointerup',()=>manual=false);
+$('bT').onclick=()=>{const m=document.body.classList.toggle('min');$('bT').textContent=m?'+':'−';$('bT').title=m?'Expandir':'Minimizar'};
+const gm=$('gm');$('bG').onclick=()=>gm.classList.add('open');$('bX').onclick=()=>gm.classList.remove('open');
+gm.addEventListener('click',e=>{if(e.target===gm)gm.classList.remove('open')});
+addEventListener('keydown',e=>{if(e.key==='Escape')gm.classList.remove('open')});
+gm.addEventListener('pointerdown',e=>e.stopPropagation());
+</script>
+</body>
+</html>
