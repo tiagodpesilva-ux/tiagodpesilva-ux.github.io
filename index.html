@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tiago 😈 vs Julia 😈 · Termodinâmica dos Afetos</title>
+<title>Bob 1 😈 vs Bob 2 😈 · Termodinâmica dos Afetos</title>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
 :root {
@@ -16,7 +16,7 @@
   --blue: #89b4fa;
   --peach: #fab387;
   --green: #a6e3a1;
-  --pink: #f5c2e7;
+  --pink: #fab387; /* agora é laranja (Bob 2) */
   --yellow: #f9e2af;
 }
 
@@ -44,7 +44,7 @@ body {
 
 .devil-pink {
   display: inline-block;
-  filter: grayscale(1) sepia(1) hue-rotate(280deg) saturate(2.5) brightness(1.8);
+  filter: grayscale(1) sepia(1) hue-rotate(0deg) saturate(3) brightness(1.5);
   margin-right: 0.15rem;
   vertical-align: middle;
 }
@@ -66,8 +66,8 @@ button:active:not(:disabled) { transform: translateY(0); }
 button:disabled { opacity: 0.4; cursor: not-allowed; }
 
 #btnOnline {
-  background: linear-gradient(135deg, rgba(137,180,250,0.25), rgba(245,194,231,0.25));
-  border-color: rgba(245,194,231,0.5);
+  background: linear-gradient(135deg, rgba(137,180,250,0.25), rgba(250,179,135,0.25));
+  border-color: rgba(250,179,135,0.5);
   font-weight: 600;
 }
 
@@ -76,8 +76,8 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   top: 1rem;
   left: 1rem;
   z-index: 30;
-  background: linear-gradient(135deg, rgba(137,180,250,0.35), rgba(245,194,231,0.35));
-  border: 1px solid rgba(245,194,231,0.6);
+  background: linear-gradient(135deg, rgba(137,180,250,0.35), rgba(250,179,135,0.35));
+  border: 1px solid rgba(250,179,135,0.6);
   font-weight: 700;
   min-width: 44px;
   padding: 0.6rem 0.8rem;
@@ -130,7 +130,7 @@ body.guest-view #btnToggleControls {
 @keyframes pulse { 0%,100%{opacity:0.4;} 50%{opacity:1;} }
 
 .duel-hud {
-  /* duas colunas = as duas metades do campo: azul sobre o domínio azul, rosa sobre o rosa */
+  /* duas colunas = as duas metades do campo: azul sobre o domínio azul, laranja sobre o laranja */
   position: relative; width: 100%; margin: 0 0 0.5rem;
   display: grid; grid-template-columns: 1fr 1fr; justify-items: center;
   z-index: 10; pointer-events: none;
@@ -147,11 +147,11 @@ body.guest-view #btnToggleControls {
   border: 1px solid rgba(137, 180, 250, 0.45);
 }
 .duel-panel.pink-side {
-  background: rgba(245, 194, 231, 0.15);
-  border: 1px solid rgba(245, 194, 231, 0.45);
+  background: rgba(250, 179, 135, 0.15);
+  border: 1px solid rgba(250, 179, 135, 0.45);
 }
 .duel-panel.pop-blue { transform: scale(1.1); box-shadow: 0 0 28px rgba(137, 180, 250, 0.8); }
-.duel-panel.pop-pink { transform: scale(1.1); box-shadow: 0 0 28px rgba(245, 194, 231, 0.8); }
+.duel-panel.pop-pink { transform: scale(1.1); box-shadow: 0 0 28px rgba(250, 179, 135, 0.8); }
 
 .duel-panel .name { font-size: 0.68rem; font-weight: 700; color: var(--text); letter-spacing: 0.06em; }
 .duel-panel .score { font-size: 1.2rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
@@ -163,13 +163,13 @@ body.guest-view #btnToggleControls {
 .pink-side .energy { justify-content: flex-end; }
 .energy-fill { height: 100%; width: 100%; border-radius: 3px; transition: width 0.15s linear; }
 .blue-side .energy-fill { background: linear-gradient(90deg, #89b4fa, #b4d0ff); }
-.pink-side .energy-fill { background: linear-gradient(270deg, #f5c2e7, #ffd9f3); }
+.pink-side .energy-fill { background: linear-gradient(270deg, #fab387, #ffd9b8); }
 .energy.nope { animation: nope 0.3s ease; }
 .energy.gain { animation: gain 0.4s ease; }
 @keyframes gain { 0% { transform: scaleY(1); filter: brightness(1); } 40% { transform: scaleY(2.2); filter: brightness(1.8); } 100% { transform: scaleY(1); filter: brightness(1); } }
 .energy:not(.ready) .energy-fill { opacity: 0.45; }
 .blue-side .energy.ready { box-shadow: 0 0 10px rgba(137, 180, 250, 0.9); }
-.pink-side .energy.ready { box-shadow: 0 0 10px rgba(245, 194, 231, 0.9); }
+.pink-side .energy.ready { box-shadow: 0 0 10px rgba(250, 179, 135, 0.9); }
 @keyframes nope { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
 
 .modal {
@@ -227,7 +227,7 @@ body.guest-view #btnToggleControls {
 
 .star-name {
   font-size: 2rem; font-weight: 600;
-  background: linear-gradient(135deg, #a5f3fc, #c4b5fd, #f5c2e7);
+  background: linear-gradient(135deg, #a5f3fc, #c4b5fd, #fab387);
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent;
   margin-top: 0.5rem; letter-spacing: 0.05em;
@@ -236,7 +236,7 @@ body.guest-view #btnToggleControls {
 .star-info em { color: var(--yellow); font-style: normal; }
 .star-meaning {
   margin-top: 1rem; padding: 1rem;
-  background: rgba(245, 194, 231, 0.08);
+  background: rgba(250, 179, 135, 0.08);
   border-left: 3px solid var(--pink); border-radius: 8px;
   text-align: left; font-size: 0.9rem; line-height: 1.6; color: var(--text);
 }
@@ -398,12 +398,12 @@ body.guest-view #btnToggleControls {
 
 <div class="duel-hud" id="duelHud">
   <div class="duel-panel blue-side" id="myPanel">
-    <div class="name" id="blueName"><span class="devil-blue">😈</span> TIAGO</div>
+    <div class="name" id="blueName"><span class="devil-blue">😈</span> BOB 1</div>
     <div class="score"><span id="myScore">0</span><span class="goal">/100</span></div>
     <div class="energy"><div class="energy-fill" id="blueEnergy"></div></div>
   </div>
   <div class="duel-panel pink-side" id="herPanel">
-    <div class="name" id="pinkName">JULIA <span class="devil-pink">😈</span></div>
+    <div class="name" id="pinkName">BOB 2 <span class="devil-pink">😈</span></div>
     <div class="score"><span id="herScore">0</span><span class="goal">/100</span></div>
     <div class="energy"><div class="energy-fill" id="pinkEnergy"></div></div>
   </div>
@@ -411,16 +411,12 @@ body.guest-view #btnToggleControls {
 
 <div class="controls" id="controlsBar">
   <button id="btnOnline">🌐 Jogar Online</button>
-  <button id="btnRain">🌧️ Chuva de partículas</button>
   <button id="btnClear">🧹 Limpar tudo</button>
   <button id="btnLab">🔬 Painel do Laboratório</button>
-  <button id="btnWishes">💫 Laboratório dos Desejos</button>
-  <button id="btnStar">⭐ Ver estrela</button>
-  <button id="btnExperiments">🧪 Experimentos criativos</button>
 </div>
 
 <canvas id="canvas"></canvas>
-<div class="counter" id="counter">💙 0 · 💗 0</div>
+<div class="counter" id="counter">🔵 0 · 🟠 0</div>
 <div class="status-pill" id="statusPill"><span class="dot"></span><span id="statusText">—</span></div>
 
 <aside class="lab-panel" id="labPanel">
@@ -459,67 +455,14 @@ body.guest-view #btnToggleControls {
       <span id="onlineStatusText">Preparando sala...</span>
     </div>
     <div class="share-box" id="shareBox" style="display:none;">
-      <label for="shareURL">📤 Envie este link para a Julia abrir:</label>
+      <label for="shareURL">📤 Envie este link para o Bob 2 abrir:</label>
       <input class="share-url" id="shareURL" readonly>
       <button class="lab-btn" id="btnCopyURL">📋 Copiar link</button>
     </div>
     <p style="color: var(--muted); font-size: 0.78rem; margin-top: 1rem; line-height: 1.5;">
-      Tiago joga na metade <strong style="color:var(--blue)">azul</strong> (esquerda) e
-      Julia na metade <strong style="color:var(--pink)">rosa</strong> (direita).
+      Bob 1 joga na metade <strong style="color:var(--blue)">azul</strong> (esquerda) e
+      Bob 2 na metade <strong style="color:var(--pink)">laranja</strong> (direita).
     </p>
-  </div>
-</div>
-
-<div class="modal" id="wishModal">
-  <div class="modal-content" style="position: relative;">
-    <button class="modal-close" data-close="wishModal">✕</button>
-    <h2>💫 Laboratório dos Desejos</h2>
-    <p style="color: var(--muted); font-size: 0.9rem; text-align: center;">
-      Escolha um desejo para materializar. Cada escolha é única e irreversível... por enquanto.
-    </p>
-    <div class="wish-list" id="wishList"></div>
-    <div class="wish-reveal" id="wishReveal"></div>
-  </div>
-</div>
-
-<div class="modal" id="starModal">
-  <div class="modal-content" style="position: relative;">
-    <button class="modal-close" data-close="starModal">✕</button>
-    <h2>⭐ A Estrela</h2>
-    <div class="star-stage"><canvas id="starCanvas"></canvas></div>
-    <div class="star-name">VEGA · α Lyrae</div>
-    <div class="star-info">
-      <p><em>Constelação:</em> Lyra (a Lira)</p>
-      <p><em>Distância:</em> ~25 anos-luz da Terra</p>
-      <p><em>Magnitude aparente:</em> +0,03 (a 5ª estrela mais brilhante do céu noturno)</p>
-      <p><em>Tipo espectral:</em> A0V — uma estrela branco-azulada</p>
-    </div>
-    <div class="star-meaning">
-      Vega é uma das estrelas mais estudadas da astronomia — foi a primeira estrela
-      fotografada (1850) e serviu como referência de magnitude zero. Junto com Altair
-      e Deneb, forma o <em>Triângulo de Verão</em>. Há cerca de 12.000 anos, foi a
-      Estrela Polar, e voltará a ser daqui a outros 12.000. Uma estrela-guia,
-      constante e luminosa, que sempre aponta o caminho de volta.
-    </div>
-  </div>
-</div>
-
-<div class="modal" id="oracleModal">
-  <div class="modal-content" style="position: relative; max-width: 560px;">
-    <button class="modal-close" data-close="oracleModal">✕</button>
-    <h2>🧪 Experimentos Criativos</h2>
-    <div class="creative-card">
-      <div class="card-head"><span class="card-icon">🔭</span><span class="card-title">Oráculo quântico</span></div>
-      <p class="card-desc">Uma hipótese carinhosa para o próximo experimento:</p>
-      <p class="card-quote" id="oracleQuote">“Algumas coincidências parecem ter sido calculadas com cuidado.”</p>
-      <button class="lab-btn" id="btnOracle">Gerar nova hipótese ↗</button>
-    </div>
-    <div class="creative-card">
-      <div class="card-head"><span class="card-icon">💌</span><span class="card-title">Gerador de elogios improváveis</span></div>
-      <p class="card-desc">Para quando faltarem palavras, mas não motivos.</p>
-      <p class="card-quote" id="complimentQuote">“Sua presença altera as condições de contorno de qualquer dia ruim.”</p>
-      <button class="lab-btn" id="btnCompliment">Medir fofura ↗</button>
-    </div>
   </div>
 </div>
 
@@ -556,22 +499,21 @@ resize();
    CONSTANTES DO DUELO
    ============================================================ */
 const BLUE = '#89b4fa';
-const PINK = '#f5c2e7';
+const PINK = '#fab387';   // Bob 2 (laranja) — nome da constante mantido para não quebrar o código
 const MAX_PARTICLES = 2000;
 const WIN_SCORE = 100;
 
-// ✨ NOVO: dificuldade — criar partícula custa energia; aniquilar é de graça, mas exige mira
-const ENERGY_MAX = 7;               // acumula no máximo 7 cliques
-const ENERGY_FULL_SECONDS = 20;     // tempo para encher a barra do zero
+// dificuldade — criar partícula custa energia; aniquilar é de graça, mas exige mira
+const ENERGY_MAX = 7;
+const ENERGY_FULL_SECONDS = 20;
 const ENERGY_REGEN = ENERGY_MAX / ENERGY_FULL_SECONDS;
-const SPAWN_COST = 1;               // custo de cada toque no vazio
-const SPAWN_COUNT = 2;              // partículas criadas por toque
-const ENERGY_PER_KILL = 1;          // energia ganha ao aniquilar uma partícula adversária
-const HIT_TOLERANCE_LOCAL = 10;     // folga de mira (px) para quem é o host
-const HIT_TOLERANCE_REMOTE = 24;    // folga maior para o convidado (compensa a latência)
-const HIT_TOUCH_BONUS = 14;         // folga extra quando o toque é de dedo (celular/tablet)
+const SPAWN_COST = 1;
+const SPAWN_COUNT = 2;
+const ENERGY_PER_KILL = 1;
+const HIT_TOLERANCE_LOCAL = 10;
+const HIT_TOLERANCE_REMOTE = 24;
+const HIT_TOUCH_BONUS = 14;
 const energy = { blue: ENERGY_MAX, pink: ENERGY_MAX };
-// só libera a criação quando a barra enche por completo; trava de novo quando zera
 const ready = { blue: true, pink: true };
 
 let myScore = 0;
@@ -642,10 +584,10 @@ function popPanel(which) {
 function showWinModal(winner) {
   const iWon = winner === 'blue';
   document.getElementById('winTitle').textContent = iWon
-    ? '🏆 TIAGO VENCEU!' : '🏆 JULIA VENCEU!';
+    ? '🏆 BOB 1 VENCEU!' : '🏆 BOB 2 VENCEU!';
   document.getElementById('winMessage').innerHTML = iWon
-    ? `Tiago dominou <strong style="color:var(--blue)">${myScore}</strong> partículas azuis no seu domínio<br>e aniquilou <strong style="color:var(--pink)">${myAnnihilations}</strong> rosas rivais.`
-    : `Julia dominou <strong style="color:var(--pink)">${herScore}</strong> partículas rosas no seu domínio<br>e aniquilou <strong style="color:var(--blue)">${herAnnihilations}</strong> azuis rivais.`;
+    ? `Bob 1 dominou <strong style="color:var(--blue)">${myScore}</strong> partículas azuis no seu domínio<br>e aniquilou <strong style="color:var(--pink)">${myAnnihilations}</strong> laranjas rivais.`
+    : `Bob 2 dominou <strong style="color:var(--pink)">${herScore}</strong> partículas laranjas no seu domínio<br>e aniquilou <strong style="color:var(--blue)">${herAnnihilations}</strong> azuis rivais.`;
   openModal('winModal');
 }
 
@@ -699,7 +641,6 @@ const BASE_TEMPERATURE = 300;
 let systemTemperature = BASE_TEMPERATURE;
 let experimentsCount = 0;
 let currentEntropy = 0;
-// ✨ escala de velocidade: sobe forte perto do máximo (1000 K ≈ 4x a velocidade normal)
 function tempScale(T) {
   return Math.sqrt(T / BASE_TEMPERATURE) * (1 + 1.2 * Math.max(0, (T - BASE_TEMPERATURE) / 700));
 }
@@ -708,7 +649,6 @@ function speedScale() { return tempScale(systemTemperature); }
 /* ============================================================
    PARTÍCULA
    ============================================================ */
-// ✨ NOVO: IDs estáveis para o convidado identificar cada partícula entre snapshots
 let nextParticleId = 1;
 
 class Particle {
@@ -778,7 +718,7 @@ function countColors() {
 }
 function updateCounter() {
   const { b, p } = countColors();
-  counterEl.textContent = `💙 ${b} · 💗 ${p}`;
+  counterEl.textContent = `🔵 ${b} · 🟠 ${p}`;
 }
 
 function recountScores() {
@@ -836,7 +776,6 @@ function updateEffects() {
 /* ============================================================
    ANIQUILAÇÃO POR COLISÃO
    ============================================================ */
-// Só aniquila cores OPOSTAS. Cores iguais convivem.
 const ANNIHILATION_CELL = 24;
 function resolveAnnihilations() {
   const n = particles.length;
@@ -905,7 +844,7 @@ function createRain(count = 120) {
   updateCounter();
 }
 
-// ✨ NOVO: cria partículas SEMPRE da cor do jogador, dentro do domínio dele
+// cria partículas SEMPRE da cor do jogador, dentro do domínio dele
 function spawnOwn(mx, my, player) {
   const color = player === 'blue' ? BLUE : PINK;
   const wallX = W / 2;
@@ -967,11 +906,11 @@ function updateDuelLabels() {
   const pinkName = document.getElementById('pinkName');
 
   if (myRole === 'guest') {
-    blueName.innerHTML = '<span class="devil-blue">😈</span> TIAGO';
-    pinkName.innerHTML = 'JULIA <span class="devil-pink">😈</span> (você)';
+    blueName.innerHTML = '<span class="devil-blue">😈</span> BOB 1';
+    pinkName.innerHTML = 'BOB 2 <span class="devil-pink">😈</span> (você)';
   } else {
-    blueName.innerHTML = '<span class="devil-blue">😈</span> TIAGO (você)';
-    pinkName.innerHTML = 'JULIA <span class="devil-pink">😈</span>';
+    blueName.innerHTML = '<span class="devil-blue">😈</span> BOB 1 (você)';
+    pinkName.innerHTML = 'BOB 2 <span class="devil-pink">😈</span>';
   }
 }
 
@@ -980,7 +919,7 @@ function findParticleAt(mx, my, tol, onlyColor) {
   let best = -1, bestD = Infinity;
   for (let i = 0; i < particles.length; i++) {
     const p = particles[i];
-    if (onlyColor && p.color !== onlyColor) continue;   // ignora partículas da própria cor
+    if (onlyColor && p.color !== onlyColor) continue;
     const dx = p.x - mx, dy = p.y - my;
     const d2 = dx * dx + dy * dy;
     const reach = p.r + tol;
@@ -989,7 +928,7 @@ function findParticleAt(mx, my, tol, onlyColor) {
   return best;
 }
 
-// ✨ NOVO: tocar em partícula (qualquer cor, qualquer lado) aniquila;
+// tocar em partícula adversária aniquila;
 // tocar no vazio do SEU domínio cria partículas e gasta energia.
 function applyPlayerClick(mx, my, player, fromRemote, broadcastNow, touch = false) {
   if (gameOver) return;
@@ -1008,7 +947,7 @@ function applyPlayerClick(mx, my, player, fromRemote, broadcastNow, touch = fals
       if (player === 'blue') myAnnihilations++; else herAnnihilations++;
       energy[player] = Math.min(ENERGY_MAX, energy[player] + ENERGY_PER_KILL);
       refreshReady(player);
-      spawnFloatText(p.x, p.y, '💔 +⚡', p.color);
+      spawnFloatText(p.x, p.y, '💥 +⚡', p.color);
       pulseEnergy(player);
     }
     particles.splice(hit, 1);
@@ -1038,7 +977,7 @@ function predictGuestVisuals(mx, my, touch = false) {
     const p = particles[hit];
     spawnRipple(p.x, p.y, '#ffffff', 44, 3);
     spawnRipple(p.x, p.y, p.color, 30, 2);
-    spawnFloatText(p.x, p.y, p.color === BLUE ? '💔' : '✖', p.color === BLUE ? BLUE : '#ffffff');
+    spawnFloatText(p.x, p.y, p.color === BLUE ? '💥' : '✖', p.color === BLUE ? BLUE : '#ffffff');
     if (p.color === BLUE) {
       energy.pink = Math.min(ENERGY_MAX, energy.pink + ENERGY_PER_KILL);
       refreshReady('pink');
@@ -1071,7 +1010,7 @@ canvas.addEventListener('pointerdown', (e) => {
   const touch = e.pointerType === 'touch' || e.pointerType === 'pen';
 
   if (myRole === 'solo') {
-    // modo treino: você joga como o Tiago (azul)
+    // modo treino: você joga como o Bob 1 (azul)
     applyPlayerClick(mx, my, 'blue', false, false, touch);
     return;
   }
@@ -1088,7 +1027,7 @@ canvas.addEventListener('pointerdown', (e) => {
   }
 });
 
-// ✨ NOVO: snapshot binário (12 bytes/partícula) com velocidade e número de sequência
+// snapshot binário (12 bytes/partícula) com velocidade e número de sequência
 let stateSeq = 0;
 function broadcastState() {
   if (!conn || !conn.open) return;
@@ -1119,13 +1058,12 @@ function broadcastState() {
   });
 }
 
-// ✨ NOVO: convidado simula localmente e corrige suavemente em direção ao host
+// convidado simula localmente e corrige suavemente em direção ao host
 let lastSeq = 0;
-const SNAP_DIST = 80;     // acima disso (px) teleporta
-const CORRECTION = 0.35;  // 0 = ignora o host, 1 = cola no host
+const SNAP_DIST = 80;
+const CORRECTION = 0.35;
 
 function applyRemoteState(data) {
-  // descarta snapshots velhos/fora de ordem (tolera reinício do contador do host)
   if (data.seq <= lastSeq && lastSeq - data.seq < 100000) return;
   lastSeq = data.seq;
 
@@ -1181,7 +1119,7 @@ function applyRemoteState(data) {
 function setupConn() {
   conn.on('open', () => {
     console.log('[peer] ✅ conexão aberta!');
-    setStatus('Conectada! Boa sorte 💜', 'online');
+    setStatus('Conectado! Boa sorte 🎮', 'online');
     if (myRole === 'guest') conn.send({ type: 'hello' });
     if (myRole === 'host' && particles.length < 40) createRain(80);
   });
@@ -1204,7 +1142,7 @@ function setupConn() {
 
   conn.on('close', () => {
     console.log('[peer] ❌ conexão fechada');
-    setStatus('Conexão perdida 💔', 'offline');
+    setStatus('Conexão perdida ❌', 'offline');
     if (myRole === 'guest') { particles.length = 0; updateCounter(); }
   });
 
@@ -1219,7 +1157,7 @@ function startHosting(sala) {
   isOnline = true;
   document.body.classList.remove('guest-view');
   updateDuelLabels();
-  setStatus('Aguardando Julia entrar...', 'waiting');
+  setStatus('Aguardando Bob 2 entrar...', 'waiting');
 
   console.log('[host] criando Peer com id:', sala);
   peer = new Peer(sala, PEER_CONFIG);
@@ -1249,7 +1187,7 @@ function startGuesting(sala) {
   isOnline = true;
   document.body.classList.add('guest-view');
   updateDuelLabels();
-  setStatus('Conectando à sala do Tiago...', 'waiting');
+  setStatus('Conectando à sala do Bob 1...', 'waiting');
   particles.length = 0;
   updateCounter();
 
@@ -1265,7 +1203,7 @@ function startGuesting(sala) {
   peer.on('open', (id) => {
     console.log('[guest] ✅ Peer aberto com id:', id);
     console.log('[guest] conectando ao host:', sala);
-    // ✨ ALTERAÇÃO: canal não ordenado + binário, para pacote atrasado não travar os seguintes
+    // canal não ordenado + binário, para pacote atrasado não travar os seguintes
     conn = peer.connect(sala, { reliable: false, serialization: 'binary' });
     setupConn();
   });
@@ -1292,7 +1230,7 @@ function openOnlineModal() {
       document.getElementById('onlineStatusText').textContent = 'Sala ativa — compartilhe o link!';
       document.getElementById('shareURL').value = buildInviteURL();
     } else {
-      document.getElementById('onlineStatusText').textContent = 'Você é a convidada 💗';
+      document.getElementById('onlineStatusText').textContent = 'Você é o Bob 2 🎮';
       document.getElementById('shareURL').value = location.href;
     }
     return;
@@ -1344,14 +1282,6 @@ document.getElementById('btnCopyURL').addEventListener('click', async () => {
 /* ============================================================
    BOTÕES
    ============================================================ */
-document.getElementById('btnRain').addEventListener('click', () => {
-  if (myRole === 'guest') {
-    if (conn && conn.open) conn.send({ type: 'rain' });
-    return;
-  }
-  createRain(120);
-});
-
 document.getElementById('btnClear').addEventListener('click', () => {
   if (myRole === 'guest') {
     if (conn && conn.open) conn.send({ type: 'clear' });
@@ -1367,15 +1297,15 @@ function drawDomains() {
   ctx.save();
   ctx.fillStyle = 'rgba(137, 180, 250, 0.018)';
   ctx.fillRect(0, 0, W / 2, H);
-  ctx.fillStyle = 'rgba(245, 194, 231, 0.018)';
+  ctx.fillStyle = 'rgba(250, 179, 135, 0.018)';
   ctx.fillRect(W / 2, 0, W / 2, H);
 
   const grad = ctx.createLinearGradient(W / 2 - 24, 0, W / 2 + 24, 0);
   grad.addColorStop(0,    'rgba(137, 180, 250, 0)');
   grad.addColorStop(0.45, 'rgba(137, 180, 250, 0.35)');
   grad.addColorStop(0.5,  'rgba(255, 255, 255, 0.55)');
-  grad.addColorStop(0.55, 'rgba(245, 194, 231, 0.35)');
-  grad.addColorStop(1,    'rgba(245, 194, 231, 0)');
+  grad.addColorStop(0.55, 'rgba(250, 179, 135, 0.35)');
+  grad.addColorStop(1,    'rgba(250, 179, 135, 0)');
   ctx.fillStyle = grad;
   ctx.fillRect(W / 2 - 24, 0, 48, H);
   ctx.restore();
@@ -1394,7 +1324,6 @@ function loop(now) {
   drawDomains();
 
   if (myRole === 'guest') {
-    // ✨ ALTERAÇÃO: o convidado também simula a física a cada frame
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
       p.update(dt);
@@ -1413,7 +1342,7 @@ function loop(now) {
     recountScores();
     if (myRole === 'host' && conn && conn.open) {
       broadcastAcc += dt * 16.67;
-      if (broadcastAcc >= 40) { broadcastAcc = 0; broadcastState(); }   // era 33
+      if (broadcastAcc >= 40) { broadcastAcc = 0; broadcastState(); }
     }
   }
 
@@ -1422,50 +1351,11 @@ function loop(now) {
 }
 
 /* ============================================================
-   DESEJOS
-   ============================================================ */
-const desejos = [
-  "☕ Vale um lanche pago pelo desenvolvedor",
-  "🍿 Vale cinema com direito a escolha",
-  "🌌 Vale sessão de observação das estrelas (ou reclamar da vida olhando para elas)",
-  "🤗 Vale um abraço de 5 minutos sem soltar",
-];
-const wishListEl = document.getElementById('wishList');
-const wishRevealEl = document.getElementById('wishReveal');
-let selectedWish = null;
-
-desejos.forEach((desejo, index) => {
-  const btn = document.createElement('button');
-  btn.className = 'wish'; btn.type = 'button'; btn.textContent = desejo;
-  btn.addEventListener('click', () => selectWish(index, btn));
-  wishListEl.appendChild(btn);
-});
-
-function selectWish(index, btn) {
-  document.querySelectorAll('.wish').forEach(el => el.classList.remove('selected'));
-  btn.classList.add('selected');
-  selectedWish = desejos[index];
-  const mensagens = [
-    "☕ Um lanche pago com carinho. Peça o que quiser — o desenvolvedor que se vire. 🍔",
-    "🍿 O filme é escolha sua, e ninguém vai reclamar. Nem se for aquele que todo mundo já viu. 🎬",
-    "🌌 O céu vai estar limpo. As estrelas, alinhadas. E a conversa, boa. ✨",
-    "🤗 Cinco minutos. Sem pressa, sem soltar. O tempo que for preciso pra recarregar. 💜",
-  ];
-  wishRevealEl.textContent = mensagens[index];
-  wishRevealEl.classList.add('show');
-}
-
-/* ============================================================
    MODAIS
    ============================================================ */
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
-document.getElementById('btnWishes').addEventListener('click', () => openModal('wishModal'));
-document.getElementById('btnStar').addEventListener('click', () => {
-  openModal('starModal');
-  startStarAnimation();
-});
 
 document.querySelectorAll('[data-close]').forEach(btn => {
   btn.addEventListener('click', (e) => closeModal(e.target.dataset.close));
@@ -1475,125 +1365,6 @@ document.querySelectorAll('.modal').forEach(modal => {
 });
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') document.querySelectorAll('.modal.open').forEach(m => closeModal(m.id));
-});
-
-/* ============================================================
-   ESTRELA VEGA
-   ============================================================ */
-const starCanvas = document.getElementById('starCanvas');
-const starCtx = starCanvas.getContext('2d');
-let starAnimId = null, starParticles = [], starRunning = false;
-
-function resizeStarCanvas() {
-  const rect = starCanvas.getBoundingClientRect();
-  if (rect.width === 0) return;
-  starCanvas.width = rect.width * dpr;
-  starCanvas.height = rect.height * dpr;
-  starCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-}
-
-function startStarAnimation() {
-  requestAnimationFrame(() => {
-    resizeStarCanvas();
-    if (starRunning) return;
-    starRunning = true;
-    const rect = starCanvas.getBoundingClientRect();
-    const sw = rect.width, sh = rect.height;
-
-    starParticles = [];
-    for (let i = 0; i < 80; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const dist = 40 + Math.random() * 200;
-      starParticles.push({
-        angle, dist,
-        speed: (0.001 + Math.random() * 0.003) * (Math.random() < 0.5 ? 1 : -1),
-        r: 0.5 + Math.random() * 1.5, alpha: 0.3 + Math.random() * 0.7,
-        twinkle: Math.random() * Math.PI * 2,
-      });
-    }
-    const bgStars = [];
-    for (let i = 0; i < 120; i++) {
-      bgStars.push({
-        x: Math.random() * sw, y: Math.random() * sh,
-        r: Math.random() * 1.2, alpha: 0.2 + Math.random() * 0.6,
-        phase: Math.random() * Math.PI * 2,
-      });
-    }
-
-    let t = 0;
-    function animate() {
-      t += 0.016;
-      const r2 = starCanvas.getBoundingClientRect();
-      const w = r2.width, h = r2.height;
-      const grad = starCtx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, Math.max(w, h) / 2);
-      grad.addColorStop(0, '#0d0d24');
-      grad.addColorStop(1, '#05050f');
-      starCtx.fillStyle = grad;
-      starCtx.fillRect(0, 0, w, h);
-
-      bgStars.forEach(s => {
-        const tw = 0.5 + 0.5 * Math.sin(t * 2 + s.phase);
-        starCtx.save();
-        starCtx.globalAlpha = s.alpha * tw;
-        starCtx.fillStyle = '#ffffff';
-        starCtx.beginPath(); starCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2); starCtx.fill();
-        starCtx.restore();
-      });
-
-      const cx = w / 2, cy = h / 2;
-      starParticles.forEach(p => {
-        p.angle += p.speed;
-        const x = cx + Math.cos(p.angle) * p.dist;
-        const y = cy + Math.sin(p.angle) * p.dist * 0.35;
-        const tw = 0.5 + 0.5 * Math.sin(t * 3 + p.twinkle);
-        starCtx.save();
-        starCtx.globalAlpha = p.alpha * tw;
-        starCtx.fillStyle = '#cfe6ff';
-        starCtx.beginPath(); starCtx.arc(x, y, p.r, 0, Math.PI * 2); starCtx.fill();
-        starCtx.restore();
-      });
-
-      const halo = starCtx.createRadialGradient(cx, cy, 0, cx, cy, 90);
-      halo.addColorStop(0, 'rgba(180, 220, 255, 0.35)');
-      halo.addColorStop(0.4, 'rgba(140, 180, 255, 0.12)');
-      halo.addColorStop(1, 'rgba(140, 180, 255, 0)');
-      starCtx.fillStyle = halo;
-      starCtx.beginPath(); starCtx.arc(cx, cy, 90, 0, Math.PI * 2); starCtx.fill();
-
-      const core = starCtx.createRadialGradient(cx, cy, 0, cx, cy, 22);
-      core.addColorStop(0, 'rgba(255, 255, 255, 1)');
-      core.addColorStop(0.4, 'rgba(200, 230, 255, 0.9)');
-      core.addColorStop(1, 'rgba(150, 200, 255, 0)');
-      starCtx.fillStyle = core;
-      starCtx.beginPath(); starCtx.arc(cx, cy, 22, 0, Math.PI * 2); starCtx.fill();
-
-      starCtx.save();
-      starCtx.shadowBlur = 30; starCtx.shadowColor = '#a5d8ff';
-      starCtx.fillStyle = '#ffffff';
-      starCtx.beginPath(); starCtx.arc(cx, cy, 5.5, 0, Math.PI * 2); starCtx.fill();
-      starCtx.restore();
-
-      starCtx.save();
-      starCtx.translate(cx, cy);
-      starCtx.rotate(t * 0.15);
-      starCtx.strokeStyle = 'rgba(200, 230, 255, 0.55)';
-      starCtx.lineWidth = 1;
-      for (let i = 0; i < 4; i++) {
-        starCtx.rotate(Math.PI / 2);
-        starCtx.beginPath(); starCtx.moveTo(0, 0);
-        starCtx.lineTo(0, -32 - Math.sin(t * 2 + i) * 4);
-        starCtx.stroke();
-      }
-      starCtx.restore();
-
-      starAnimId = requestAnimationFrame(animate);
-    }
-    animate();
-  });
-}
-
-window.addEventListener('resize', () => {
-  if (starRunning && document.getElementById('starModal').classList.contains('open')) resizeStarCanvas();
 });
 
 /* ============================================================
@@ -1689,71 +1460,12 @@ setInterval(() => {
   entropyStateEl.textContent = entropyLabel(currentEntropy);
 }, 160);
 
-document.getElementById('btnRain').addEventListener('click', registerExperiment);
 document.getElementById('btnClear').addEventListener('click', registerExperiment);
-document.getElementById('btnWishes').addEventListener('click', registerExperiment);
-document.getElementById('btnStar').addEventListener('click', registerExperiment);
-document.getElementById('btnExperiments').addEventListener('click', registerExperiment);
 document.getElementById('btnOnline').addEventListener('click', registerExperiment);
 canvas.addEventListener('pointerdown', registerExperiment);
 
-// painel do laboratório abre/fecha pelo botão nas opções (🔬)
 labToggle.addEventListener('click', () => labPanel.classList.remove('open'));
 document.getElementById('btnLab').addEventListener('click', () => labPanel.classList.toggle('open'));
-
-/* ============================================================
-   EXPERIMENTOS CRIATIVOS
-   ============================================================ */
-const ORACULO_FRASES = [
-  "Algumas coincidências parecem ter sido calculadas com cuidado.",
-  "Se duas partículas se encontram, o universo tinha um plano.",
-  "Toda entropia é uma forma disfarçada de saudade.",
-  "O observador altera o sistema — e o sistema, gentilmente, altera o observador.",
-  "Nenhum estado é tão estável quanto a vontade de te ver de novo.",
-  "O tempo só passa devagar quando a gente não está olhando.",
-  "Existem variáveis que não cabem em nenhuma equação.",
-  "A temperatura ambiente sobe um pouco quando você chega perto.",
-  "Toda órbita é, no fundo, uma forma elegante de ficar.",
-  "O acaso é o apelido que damos ao que ainda não sabemos explicar.",
-  "Um sistema em equilíbrio é um sistema que desistiu de surpreender.",
-  "Se o amor fosse uma força, seria a única que não decai com a distância.",
-];
-const ELOGIOS_FRASES = [
-  "Sua presença altera as condições de contorno de qualquer dia ruim.",
-  "Você é a constante que não muda, mesmo quando tudo muda.",
-  "Seu sorriso tem entropia baixa: tudo se organiza ao redor.",
-  "Você é a exceção que confirma todas as regras bonitas.",
-  "Existem pessoas que iluminam; você é uma delas, com espectro de Vega.",
-  "Sua fofura é mensurável — e o resultado extrapola a escala.",
-  "Você é o tipo de variável que a gente quer manter constante.",
-  "Toda hipótese do oráculo é, no fundo, sobre você.",
-  "Seu jeito é o único estado do sistema que nunca decai.",
-  "Você faz o laboratório inteiro parecer mais bonito.",
-  "Se o caos tem beleza, é porque em algum lugar ele se parece com você.",
-  "Você é o resultado que nenhuma equação consegue prever — e a gente nem quer.",
-];
-const oracleQuoteEl     = document.getElementById('oracleQuote');
-const complimentQuoteEl = document.getElementById('complimentQuote');
-function flash(el, text) {
-  el.classList.remove('flash');
-  el.textContent = '“' + text + '”';
-  void el.offsetWidth;
-  el.classList.add('flash');
-}
-function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-
-document.getElementById('btnOracle').addEventListener('click', () => {
-  flash(oracleQuoteEl, pickRandom(ORACULO_FRASES));
-  registerExperiment();
-});
-document.getElementById('btnCompliment').addEventListener('click', () => {
-  flash(complimentQuoteEl, pickRandom(ELOGIOS_FRASES));
-  registerExperiment();
-});
-document.getElementById('btnExperiments').addEventListener('click', () => {
-  openModal('oracleModal');
-  registerExperiment();
-});
 
 // celular deitado: esconde as opções por padrão para sobrar tela (☰ mostra de novo)
 const landscapeMQ = window.matchMedia('(max-height: 500px)');
