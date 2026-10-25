@@ -1,1485 +1,182 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bob 1 😈 vs Bob 2 😈 · Termodinâmica dos Afetos</title>
-<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Spin Glitch</title>
 <style>
-:root {
-  color-scheme: light dark;
-  --bg: #1e1e2e;
-  --surface: #29283d;
-  --surface-2: #34324b;
-  --text: #f3f0ff;
-  --muted: #c4c0dc;
-  --blue: #89b4fa;
-  --peach: #fab387;
-  --green: #a6e3a1;
-  --pink: #fab387; /* agora é laranja (Bob 2) */
-  --yellow: #f9e2af;
-}
-
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  min-height: 100vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 1rem;
-}
-
-
-.devil-blue {
-  display: inline-block;
-  filter: grayscale(1) sepia(1) hue-rotate(180deg) saturate(5) brightness(1.6);
-  margin-right: 0.15rem;
-  vertical-align: middle;
-}
-
-.devil-pink {
-  display: inline-block;
-  filter: grayscale(1) sepia(1) hue-rotate(0deg) saturate(3) brightness(1.5);
-  margin-right: 0.15rem;
-  vertical-align: middle;
-}
-
-.controls {
-  display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center;
-  z-index: 10; position: relative; margin-bottom: 0.5rem; max-width: 900px;
-  transition: all 0.25s ease;
-}
-
-button {
-  background: var(--surface-2); color: var(--text);
-  border: 1px solid var(--surface); border-radius: 8px;
-  padding: 0.6rem 1rem; font-size: 0.9rem; cursor: pointer;
-  transition: all 0.2s ease;
-}
-button:hover:not(:disabled) { background: var(--blue); color: var(--bg); transform: translateY(-2px); }
-button:active:not(:disabled) { transform: translateY(0); }
-button:disabled { opacity: 0.4; cursor: not-allowed; }
-
-#btnOnline {
-  background: linear-gradient(135deg, rgba(137,180,250,0.25), rgba(250,179,135,0.25));
-  border-color: rgba(250,179,135,0.5);
-  font-weight: 600;
-}
-
-#btnToggleControls {
-  position: fixed;
-  top: 1rem;
-  left: 1rem;
-  z-index: 30;
-  background: linear-gradient(135deg, rgba(137,180,250,0.35), rgba(250,179,135,0.35));
-  border: 1px solid rgba(250,179,135,0.6);
-  font-weight: 700;
-  min-width: 44px;
-  padding: 0.6rem 0.8rem;
-  font-size: 1rem;
-  border-radius: 8px;
-  cursor: pointer;
-  color: var(--text);
-  transition: all 0.2s ease;
-  font-family: inherit;
-  line-height: 1;
-}
-#btnToggleControls:hover {
-  background: var(--blue);
-  color: var(--bg);
-  transform: translateY(-2px);
-}
-
-body.guest-view #btnToggleControls {
-  left: 1rem;
-}
-
-#controlsBar.collapsed > button {
-  display: none;
-}
-
-#canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: auto; }
-
-.counter {
-  position: fixed; top: 1rem; right: 1rem;
-  background: rgba(41, 40, 61, 0.9); color: var(--muted);
-  font-size: 0.8rem; padding: 0.4rem 0.8rem; border-radius: 8px;
-  z-index: 10; backdrop-filter: blur(6px); font-variant-numeric: tabular-nums;
-}
-
-.status-pill {
-  position: fixed; top: 3.1rem; right: 1rem;
-  background: rgba(41, 40, 61, 0.9); color: var(--muted);
-  font-size: 0.72rem; padding: 0.3rem 0.7rem; border-radius: 20px;
-  z-index: 10; backdrop-filter: blur(6px);
-  display: none; align-items: center; gap: 0.4rem;
-}
-.status-pill.show { display: flex; }
-.status-pill .dot {
-  width: 8px; height: 8px; border-radius: 50%; background: var(--yellow);
-  animation: pulse 1.2s infinite ease-in-out;
-}
-.status-pill.online .dot { background: var(--green); animation: none; box-shadow: 0 0 10px var(--green); }
-.status-pill.offline .dot { background: #f38ba8; animation: none; }
-
-@keyframes pulse { 0%,100%{opacity:0.4;} 50%{opacity:1;} }
-
-.duel-hud {
-  /* duas colunas = as duas metades do campo: azul sobre o domínio azul, laranja sobre o laranja */
-  position: relative; width: 100%; margin: 0 0 0.5rem;
-  display: grid; grid-template-columns: 1fr 1fr; justify-items: center;
-  z-index: 10; pointer-events: none;
-}
-
-.duel-panel {
-  width: min(190px, 92%); text-align: center; padding: 0.4rem 0.7rem; border-radius: 12px;
-  backdrop-filter: blur(10px); pointer-events: none;
-  transition: transform 0.18s ease, box-shadow 0.3s ease;
-  min-width: 0;
-}
-.duel-panel.blue-side {
-  background: rgba(137, 180, 250, 0.15);
-  border: 1px solid rgba(137, 180, 250, 0.45);
-}
-.duel-panel.pink-side {
-  background: rgba(250, 179, 135, 0.15);
-  border: 1px solid rgba(250, 179, 135, 0.45);
-}
-.duel-panel.pop-blue { transform: scale(1.1); box-shadow: 0 0 28px rgba(137, 180, 250, 0.8); }
-.duel-panel.pop-pink { transform: scale(1.1); box-shadow: 0 0 28px rgba(250, 179, 135, 0.8); }
-
-.duel-panel .name { font-size: 0.68rem; font-weight: 700; color: var(--text); letter-spacing: 0.06em; }
-.duel-panel .score { font-size: 1.2rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
-.blue-side .score { color: var(--blue); }
-.pink-side .score { color: var(--pink); }
-.duel-panel .rule { font-size: 0.55rem; color: var(--muted); margin-top: 0.25rem; opacity: 0.85; line-height: 1.3; }
-.goal { font-size: 0.6rem; color: var(--muted); font-weight: 500; margin-left: 0.15rem; }
-.energy { height: 4px; border-radius: 3px; background: rgba(0,0,0,0.35); overflow: hidden; margin-top: 0.25rem; display: flex; }
-.pink-side .energy { justify-content: flex-end; }
-.energy-fill { height: 100%; width: 100%; border-radius: 3px; transition: width 0.15s linear; }
-.blue-side .energy-fill { background: linear-gradient(90deg, #89b4fa, #b4d0ff); }
-.pink-side .energy-fill { background: linear-gradient(270deg, #fab387, #ffd9b8); }
-.energy.nope { animation: nope 0.3s ease; }
-.energy.gain { animation: gain 0.4s ease; }
-@keyframes gain { 0% { transform: scaleY(1); filter: brightness(1); } 40% { transform: scaleY(2.2); filter: brightness(1.8); } 100% { transform: scaleY(1); filter: brightness(1); } }
-.energy:not(.ready) .energy-fill { opacity: 0.45; }
-.blue-side .energy.ready { box-shadow: 0 0 10px rgba(137, 180, 250, 0.9); }
-.pink-side .energy.ready { box-shadow: 0 0 10px rgba(250, 179, 135, 0.9); }
-@keyframes nope { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
-
-.modal {
-  position: fixed; inset: 0; background: rgba(10, 10, 20, 0.75);
-  display: none; align-items: center; justify-content: center;
-  z-index: 100; padding: 1rem; backdrop-filter: blur(4px);
-}
-.modal.open { display: flex; animation: fadeIn 0.25s ease; }
-@keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
-
-.modal-content {
-  background: var(--surface); border: 1px solid var(--surface-2);
-  border-radius: 16px; padding: 1.5rem;
-  max-width: 520px; width: 100%; max-height: 85vh; overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); animation: slideUp 0.3s ease;
-}
-@keyframes slideUp { from{transform:translateY(20px);opacity:0;} to{transform:translateY(0);opacity:1;} }
-
-.modal-content h2 { font-size: 1.2rem; margin-bottom: 1rem; text-align: center; }
-
-.modal-close {
-  position: absolute; top: 1rem; right: 1rem; background: transparent; border: none;
-  color: var(--muted); font-size: 1.5rem; cursor: pointer;
-  width: 36px; height: 36px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-}
-.modal-close:hover { background: var(--surface-2); color: var(--text); transform: none; }
-
-.wish-list { display: flex; flex-direction: column; gap: 0.6rem; margin: 1rem 0; }
-.wish {
-  background: var(--surface-2); border: 1px solid transparent;
-  border-radius: 12px; padding: 0.9rem 1rem;
-  text-align: left; font-size: 0.95rem; line-height: 1.4;
-  cursor: pointer; transition: all 0.2s ease;
-  display: flex; align-items: center; gap: 0.6rem;
-}
-.wish:hover { border-color: var(--blue); transform: translateX(4px); }
-.wish.selected { border-color: var(--green); background: rgba(166, 227, 161, 0.1); }
-.wish.selected::after { content: '✦'; margin-left: auto; color: var(--green); font-size: 1.2rem; }
-
-.wish-reveal {
-  background: rgba(137, 180, 250, 0.1); border: 1px dashed var(--blue);
-  border-radius: 12px; padding: 1rem; margin-top: 1rem;
-  text-align: center; color: var(--text); font-size: 0.95rem; display: none;
-}
-.wish-reveal.show { display: block; animation: fadeIn 0.4s ease; }
-
-#starModal .modal-content { max-width: 560px; text-align: center; }
-.star-stage {
-  position: relative; width: 100%; height: 320px;
-  background: radial-gradient(ellipse at center, #0b0b1f 0%, #05050f 100%);
-  border-radius: 12px; overflow: hidden; margin: 1rem 0;
-}
-.star-stage canvas { display: block; width: 100%; height: 100%; }
-
-.star-name {
-  font-size: 2rem; font-weight: 600;
-  background: linear-gradient(135deg, #a5f3fc, #c4b5fd, #fab387);
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin-top: 0.5rem; letter-spacing: 0.05em;
-}
-.star-info { color: var(--muted); font-size: 0.9rem; line-height: 1.6; margin-top: 0.75rem; text-align: left; }
-.star-info em { color: var(--yellow); font-style: normal; }
-.star-meaning {
-  margin-top: 1rem; padding: 1rem;
-  background: rgba(250, 179, 135, 0.08);
-  border-left: 3px solid var(--pink); border-radius: 8px;
-  text-align: left; font-size: 0.9rem; line-height: 1.6; color: var(--text);
-}
-
-.lab-panel {
-  position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); z-index: 20; width: 252px; display: none;
-  background: rgba(41, 40, 61, 0.92); border: 1px solid var(--surface-2);
-  border-radius: 14px; backdrop-filter: blur(10px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
-  font-size: 0.82rem; overflow: hidden; transition: max-height 0.3s ease;
-}
-.lab-panel-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0.65rem 0.9rem; background: rgba(52, 50, 75, 0.65);
-  border-bottom: 1px solid var(--surface-2); font-weight: 600; font-size: 0.82rem;
-}
-.lab-toggle {
-  background: transparent; border: none; color: var(--muted); font-size: 1.15rem;
-  width: 24px; height: 24px; line-height: 1; padding: 0; cursor: pointer; border-radius: 6px;
-}
-.lab-toggle:hover { background: var(--surface-2); color: var(--text); transform: none; }
-.lab-panel.collapsed .lab-body { display: none; }
-.lab-body { padding: 0.9rem; display: flex; flex-direction: column; gap: 1rem; }
-.lab-block { display: flex; flex-direction: column; gap: 0.45rem; }
-.lab-label { display: flex; justify-content: space-between; align-items: baseline; color: var(--text); font-size: 0.82rem; }
-.lab-value { color: var(--blue); font-variant-numeric: tabular-nums; font-weight: 600; transition: color 0.2s ease; }
-
-.lab-slider {
-  width: 100%; -webkit-appearance: none; appearance: none;
-  height: 6px; border-radius: 3px; outline: none; cursor: pointer;
-  background: linear-gradient(90deg, #89b4fa, #f9e2af, #fab387, #f38ba8);
-}
-.lab-slider::-webkit-slider-thumb {
-  -webkit-appearance: none; appearance: none;
-  width: 16px; height: 16px; border-radius: 50%; background: #fff;
-  border: 2px solid var(--blue); box-shadow: 0 0 8px rgba(137, 180, 250, 0.8); cursor: pointer;
-}
-.lab-slider::-moz-range-thumb {
-  width: 16px; height: 16px; border-radius: 50%; background: #fff;
-  border: 2px solid var(--blue); box-shadow: 0 0 8px rgba(137, 180, 250, 0.8); cursor: pointer;
-}
-.lab-scale { display: flex; justify-content: space-between; color: var(--muted); font-size: 0.68rem; opacity: 0.8; }
-
-.entropy-bar { width: 100%; height: 8px; border-radius: 4px; background: rgba(0,0,0,0.35); overflow: hidden; position: relative; }
-.entropy-fill {
-  height: 100%; width: 0%; border-radius: 4px;
-  background: linear-gradient(90deg, #a6e3a1, #f9e2af, #fab387, #f38ba8);
-  transition: width 0.2s ease; box-shadow: 0 0 10px rgba(249, 226, 175, 0.5);
-}
-.lab-state { color: var(--muted); font-size: 0.74rem; font-style: italic; }
-.lab-formula { color: var(--muted); font-size: 0.7rem; text-align: center; opacity: 0.7; font-family: ui-monospace, monospace; }
-.lab-btn {
-  background: var(--surface-2); color: var(--text);
-  border: 1px solid var(--surface); border-radius: 8px;
-  padding: 0.5rem 0.8rem; font-size: 0.78rem; cursor: pointer;
-  transition: all 0.2s ease; width: 100%;
-}
-.lab-btn:hover { background: var(--green); color: var(--bg); transform: translateY(-1px); }
-.lab-value.pop { animation: popScale 0.45s ease; }
-@keyframes popScale {
-  0%   { transform: scale(1); }
-  50%  { transform: scale(1.45); color: var(--yellow); }
-  100% { transform: scale(1); }
-}
-
-.creative-card { background: var(--surface-2); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; border-left: 3px solid var(--blue); }
-.creative-card:nth-child(2) { border-left-color: var(--pink); }
-.card-head { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem; }
-.card-icon { font-size: 1.4rem; }
-.card-title { font-weight: 600; font-size: 1rem; }
-.card-desc { color: var(--muted); font-size: 0.8rem; margin-bottom: 0.7rem; }
-.card-quote {
-  font-style: italic; color: var(--text);
-  background: rgba(137, 180, 250, 0.08); border-radius: 8px;
-  padding: 0.7rem 0.9rem; margin-bottom: 0.8rem;
-  font-size: 0.9rem; line-height: 1.5; min-height: 3em; transition: background 0.3s ease;
-}
-.card-quote.flash { animation: quoteFlash 0.55s ease; }
-@keyframes quoteFlash {
-  0%   { background: rgba(137, 180, 250, 0.35); }
-  100% { background: rgba(137, 180, 250, 0.08); }
-}
-
-.share-box {
-  background: rgba(137, 180, 250, 0.08);
-  border: 1px dashed var(--blue);
-  border-radius: 12px;
-  padding: 1rem;
-  margin-top: 1rem;
-}
-.share-box label {
-  display: block; color: var(--muted); font-size: 0.8rem;
-  margin-bottom: 0.5rem; text-align: left;
-}
-.share-url {
-  width: 100%; padding: 0.7rem; border-radius: 8px;
-  border: 1px solid var(--surface-2); background: var(--surface-2);
-  color: var(--text); font-size: 0.75rem; text-align: center;
-  font-family: ui-monospace, monospace;
-  margin-bottom: 0.6rem; cursor: text;
-}
-.share-url:focus { outline: none; border-color: var(--blue); }
-
-.status-line {
-  display: flex; align-items: center; justify-content: center;
-  gap: 0.5rem; color: var(--muted); font-size: 0.85rem;
-  padding: 0.8rem; margin: 0.5rem 0;
-}
-.status-line .dot {
-  width: 10px; height: 10px; border-radius: 50%;
-  background: var(--yellow); animation: pulse 1.2s infinite;
-}
-.status-line.ready .dot { background: var(--green); animation: none; box-shadow: 0 0 12px var(--green); }
-.status-line.error .dot { background: #f38ba8; animation: none; }
-
-@media (max-width: 640px) {
-  button { padding: 0.45rem 0.7rem; font-size: 0.75rem; }
-  .counter { font-size: 0.68rem; padding: 0.3rem 0.6rem; }
-  .status-pill { font-size: 0.65rem; top: 2.8rem; padding: 0.25rem 0.55rem; }
-
-  #btnToggleControls {
-    top: 0.5rem;
-    left: 0.5rem;
-    padding: 0.5rem 0.65rem;
-    font-size: 0.9rem;
-  }
-
-  .duel-hud { margin-top: 3.2rem; gap: 0.5rem; }
-  .duel-panel { padding: 0.3rem 0.5rem; border-radius: 10px; }
-  .duel-panel .score { font-size: 1rem; }
-  .duel-panel .name { font-size: 0.6rem; }
-  .duel-panel .rule { font-size: 0.5rem; }
-
-  .lab-panel { width: min(94vw, 300px); max-height: 60vh; overflow-y: auto; }
-}
-.lab-panel.open { display: block; }
-
-/* celular deitado (pouca altura): tudo mais compacto */
-@media (max-height: 500px) {
-  body { padding: 0.4rem; }
-  #btnToggleControls { top: 0.3rem; left: 0.3rem; padding: 0.35rem 0.55rem; font-size: 0.85rem; }
-  .counter { top: 0.3rem; right: 0.3rem; font-size: 0.65rem; padding: 0.2rem 0.5rem; }
-  .status-pill { top: 1.9rem; right: 0.3rem; font-size: 0.6rem; padding: 0.15rem 0.5rem; }
-  .duel-hud { margin: 0 0 0.3rem; }
-  .duel-panel { width: min(140px, 92%); padding: 0.2rem 0.45rem; border-radius: 9px; }
-  .duel-panel .name { font-size: 0.55rem; }
-  .duel-panel .score { font-size: 0.95rem; }
-  .goal { font-size: 0.5rem; }
-  .energy { height: 3px; margin-top: 0.15rem; }
-  .controls { gap: 0.3rem; }
-  button { padding: 0.35rem 0.55rem; font-size: 0.7rem; }
-  .lab-panel { width: min(94vw, 640px); bottom: 0.4rem; max-height: none; overflow: hidden; }
-  .lab-body { flex-direction: row; gap: 0.8rem; padding: 0.5rem; }
-  .lab-block { flex: 1; }
-}
+:root{--bg:#07080d;--fg:#d9e3ff;--mut:#7480a3;--up:#ff3b5c;--dn:#3b8bff;--ac:#35ffc4;--line:#1b2238;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{height:100%;margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 ui-monospace,Menlo,Consolas,"DejaVu Sans Mono",monospace;display:flex;flex-direction:column;overflow:hidden;user-select:none;-webkit-user-select:none}
+header{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;padding:10px 14px 6px}
+h1{margin:0;font-size:20px;letter-spacing:.04em;font-weight:800}
+h1 span{color:var(--ac);text-shadow:2px 0 var(--up),-2px 0 var(--dn)}
+nav{display:flex;flex-wrap:wrap;gap:6px}
+nav button,.btn{font:inherit;color:var(--fg);background:#0d1120;border:1px solid var(--line);padding:5px 10px;border-radius:6px;cursor:pointer}
+nav button.on{border-color:var(--ac);color:var(--ac);background:#0b1c1a}
+nav button:focus-visible,.btn:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+#hud{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;padding:4px 14px 8px;color:var(--mut)}
+#hud b{color:var(--fg);font-size:16px}
+#bar{flex:1 1 160px;min-width:140px;height:10px;border:1px solid var(--line);border-radius:5px;overflow:hidden;background:#0a0d18}
+#fill{display:block;height:100%;width:0;background:var(--ac)}
+#stage{position:relative;flex:1;min-height:260px;margin:0 8px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:
+ repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px),#090b14}
+#cv{display:block;width:100%;height:100%;touch-action:manipulation;cursor:crosshair}
+#stage.shake{animation:sh .35s steps(2)}
+@keyframes sh{0%{transform:translate(4px,-2px)}25%{transform:translate(-5px,2px)}50%{transform:translate(3px,3px)}75%{transform:translate(-2px,-3px)}100%{transform:none}}
+#ov{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(5,6,12,.82);padding:16px;text-align:center}
+#ov .box{max-width:460px}
+#ov h2{margin:0 0 10px;font-size:26px;text-shadow:2px 0 var(--up),-2px 0 var(--dn)}
+#ov p{margin:6px 0;color:#aab6d8}
+#ov .btn{margin-top:14px;font-size:16px;padding:9px 22px;border-color:var(--ac);color:var(--ac)}
+footer{padding:6px 14px 10px;color:var(--mut);font-size:12px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.u{color:var(--up)}.d{color:var(--dn)}
+@media (prefers-reduced-motion:reduce){#stage.shake{animation:none}}
 </style>
 </head>
 <body>
-
-<div class="duel-hud" id="duelHud">
-  <div class="duel-panel blue-side" id="myPanel">
-    <div class="name" id="blueName"><span class="devil-blue">😈</span> BOB 1</div>
-    <div class="score"><span id="myScore">0</span><span class="goal">/100</span></div>
-    <div class="energy"><div class="energy-fill" id="blueEnergy"></div></div>
-  </div>
-  <div class="duel-panel pink-side" id="herPanel">
-    <div class="name" id="pinkName">BOB 2 <span class="devil-pink">😈</span></div>
-    <div class="score"><span id="herScore">0</span><span class="goal">/100</span></div>
-    <div class="energy"><div class="energy-fill" id="pinkEnergy"></div></div>
-  </div>
-</div>
-
-<div class="controls" id="controlsBar">
-  <button id="btnOnline">🌐 Jogar Online</button>
-  <button id="btnClear">🧹 Limpar tudo</button>
-  <button id="btnLab">🔬 Painel do Laboratório</button>
-</div>
-
-<canvas id="canvas"></canvas>
-<div class="counter" id="counter">🔵 0 · 🟠 0</div>
-<div class="status-pill" id="statusPill"><span class="dot"></span><span id="statusText">—</span></div>
-
-<aside class="lab-panel" id="labPanel">
-  <div class="lab-panel-header">
-    <span>🔬 Painel do Laboratório</span>
-    <button class="lab-toggle" id="labToggle" aria-label="Fechar painel">✕</button>
-  </div>
-  <div class="lab-body">
-    <div class="lab-block">
-      <div class="lab-label"><span>🌡️ Temperatura</span><span class="lab-value" id="tempValue">300 K</span></div>
-      <input type="range" id="tempSlider" min="1" max="1000" value="300" class="lab-slider">
-      <div class="lab-scale"><span>1 K</span><span>1000 K</span></div>
-    </div>
-    <div class="lab-block">
-      <div class="lab-label"><span>🌀 Entropia S</span><span class="lab-value" id="entropyValue">0.000</span></div>
-      <div class="entropy-bar"><div class="entropy-fill" id="entropyFill"></div></div>
-      <div class="lab-state" id="entropyState">—</div>
-      <div class="lab-formula">S = −k<sub>B</sub> Σ p<sub>i</sub> ln p<sub>i</sub></div>
-    </div>
-    <div class="lab-block">
-      <div class="lab-label"><span>📈 Caos controlado</span><span class="lab-value" id="chaosValue">0</span></div>
-      <div class="lab-state" id="chaosState">Nenhum experimento ainda</div>
-      <button id="btnRegister" class="lab-btn">Registrar mais um ↗</button>
-    </div>
-  </div>
-</aside>
-
-<button id="btnToggleControls" title="Minimizar controles">−</button>
-
-<div class="modal" id="onlineModal">
-  <div class="modal-content" style="position: relative; text-align: center;">
-    <button class="modal-close" data-close="onlineModal">✕</button>
-    <h2>🌐 Jogar Online</h2>
-    <div class="status-line" id="onlineStatusLine">
-      <span class="dot"></span>
-      <span id="onlineStatusText">Preparando sala...</span>
-    </div>
-    <div class="share-box" id="shareBox" style="display:none;">
-      <label for="shareURL">📤 Envie este link para o Bob 2 abrir:</label>
-      <input class="share-url" id="shareURL" readonly>
-      <button class="lab-btn" id="btnCopyURL">📋 Copiar link</button>
-    </div>
-    <p style="color: var(--muted); font-size: 0.78rem; margin-top: 1rem; line-height: 1.5;">
-      Bob 1 joga na metade <strong style="color:var(--blue)">azul</strong> (esquerda) e
-      Bob 2 na metade <strong style="color:var(--pink)">laranja</strong> (direita).
-    </p>
-  </div>
-</div>
-
-<div class="modal" id="winModal">
-  <div class="modal-content" style="position: relative; text-align: center;">
-    <h2 id="winTitle">🏆 Vitória!</h2>
-    <p id="winMessage" style="color: var(--muted); margin: 1rem 0; font-size: 1rem; line-height: 1.6;"></p>
-    <button class="lab-btn" id="btnRestart" style="max-width: 220px; margin: 0 auto;">🔄 Jogar de novo</button>
-  </div>
-</div>
+<header><h1>SPIN<span>GLITCH</span></h1><nav id="tabs"></nav></header>
+<section id="hud">
+ <div>pontos <b id="sc">0</b></div><div>nível <b id="lv">1</b></div><div>combo <b id="cb">x1</b></div>
+ <div>recorde <b id="bs">0</b></div><div>E/J <b id="en">0</b></div><div>M <b id="mg">0</b></div>
+ <div id="bar" title="Entropia"><i id="fill"></i></div>
+ <button class="btn" id="hintBtn">dica (+6% entropia)</button>
+</section>
+<main id="stage"><canvas id="cv"></canvas><div id="ov"></div></main>
+<footer><span><b class="u">↑ vermelho</b> / <b class="d">↓ azul</b></span><span id="info"></span></footer>
 
 <script>
-/* ============================================================
-   CANVAS
-   ============================================================ */
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-let W = 0, H = 0;
-let dpr = window.devicePixelRatio || 1;
-
-function resize() {
-  W = window.innerWidth;
-  H = window.innerHeight;
-  canvas.width = W * dpr;
-  canvas.height = H * dpr;
-  canvas.style.width = W + 'px';
-  canvas.style.height = H + 'px';
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-}
-window.addEventListener('resize', resize);
-resize();
-
-/* ============================================================
-   CONSTANTES DO DUELO
-   ============================================================ */
-const BLUE = '#89b4fa';
-const PINK = '#fab387';   // Bob 2 (laranja) — nome da constante mantido para não quebrar o código
-const MAX_PARTICLES = 2000;
-const WIN_SCORE = 100;
-
-// dificuldade — criar partícula custa energia; aniquilar é de graça, mas exige mira
-const ENERGY_MAX = 7;
-const ENERGY_FULL_SECONDS = 20;
-const ENERGY_REGEN = ENERGY_MAX / ENERGY_FULL_SECONDS;
-const SPAWN_COST = 1;
-const SPAWN_COUNT = 2;
-const ENERGY_PER_KILL = 1;
-const HIT_TOLERANCE_LOCAL = 10;
-const HIT_TOLERANCE_REMOTE = 24;
-const HIT_TOUCH_BONUS = 14;
-const energy = { blue: ENERGY_MAX, pink: ENERGY_MAX };
-const ready = { blue: true, pink: true };
-
-let myScore = 0;
-let herScore = 0;
-let myAnnihilations = 0;
-let herAnnihilations = 0;
-let gameOver = false;
-
-const myScoreEl = document.getElementById('myScore');
-const herScoreEl = document.getElementById('herScore');
-const myPanelEl = document.getElementById('myPanel');
-const herPanelEl = document.getElementById('herPanel');
-
-function updateDuelHUD() {
-  myScoreEl.textContent = myScore;
-  herScoreEl.textContent = herScore;
-}
-document.querySelectorAll('.goal').forEach(el => { el.textContent = '/' + WIN_SCORE; });
-
-const blueEnergyEl = document.getElementById('blueEnergy');
-const pinkEnergyEl = document.getElementById('pinkEnergy');
-function updateEnergyBars() {
-  blueEnergyEl.style.width = (energy.blue / ENERGY_MAX * 100) + '%';
-  pinkEnergyEl.style.width = (energy.pink / ENERGY_MAX * 100) + '%';
-  blueEnergyEl.parentElement.classList.toggle('ready', ready.blue);
-  pinkEnergyEl.parentElement.classList.toggle('ready', ready.pink);
-}
-function refreshReady(side) {
-  if (energy[side] >= ENERGY_MAX - 1e-6) ready[side] = true;
-  else if (energy[side] < SPAWN_COST) ready[side] = false;
-}
-function regenEnergy(dt) {
-  const add = ENERGY_REGEN * dt * 16.67 / 1000;
-  energy.blue = Math.min(ENERGY_MAX, energy.blue + add);
-  energy.pink = Math.min(ENERGY_MAX, energy.pink + add);
-  refreshReady('blue');
-  refreshReady('pink');
-  updateEnergyBars();
-}
-function resetEnergy() {
-  energy.blue = ENERGY_MAX;
-  energy.pink = ENERGY_MAX;
-  ready.blue = true;
-  ready.pink = true;
-  updateEnergyBars();
-}
-function pulseEnergy(side) {
-  const el = (side === 'blue' ? blueEnergyEl : pinkEnergyEl).parentElement;
-  el.classList.remove('gain');
-  void el.offsetWidth;
-  el.classList.add('gain');
-}
-function flashNoEnergy(side) {
-  const el = (side === 'blue' ? blueEnergyEl : pinkEnergyEl).parentElement;
-  el.classList.remove('nope');
-  void el.offsetWidth;
-  el.classList.add('nope');
-}
-
-function popPanel(which) {
-  const el = which === 'blue' ? myPanelEl : herPanelEl;
-  el.classList.remove('pop-blue', 'pop-pink');
-  void el.offsetWidth;
-  el.classList.add(which === 'blue' ? 'pop-blue' : 'pop-pink');
-  setTimeout(() => el.classList.remove('pop-blue', 'pop-pink'), 180);
-}
-
-function showWinModal(winner) {
-  const iWon = winner === 'blue';
-  document.getElementById('winTitle').textContent = iWon
-    ? '🏆 BOB 1 VENCEU!' : '🏆 BOB 2 VENCEU!';
-  document.getElementById('winMessage').innerHTML = iWon
-    ? `Bob 1 dominou <strong style="color:var(--blue)">${myScore}</strong> partículas azuis no seu domínio<br>e aniquilou <strong style="color:var(--pink)">${myAnnihilations}</strong> laranjas rivais.`
-    : `Bob 2 dominou <strong style="color:var(--pink)">${herScore}</strong> partículas laranjas no seu domínio<br>e aniquilou <strong style="color:var(--blue)">${herAnnihilations}</strong> azuis rivais.`;
-  openModal('winModal');
-}
-
-function checkWin() {
-  if (gameOver) return;
-  if (myScore >= WIN_SCORE) {
-    gameOver = true;
-    showWinModal('blue');
-  } else if (herScore >= WIN_SCORE) {
-    gameOver = true;
-    showWinModal('pink');
-  }
-}
-
-document.getElementById('btnRestart').addEventListener('click', () => {
-  particles.length = 0;
-  myScore = 0; herScore = 0;
-  myAnnihilations = 0; herAnnihilations = 0;
-  gameOver = false;
-  resetEnergy();
-  updateDuelHUD();
-  updateCounter();
-  closeModal('winModal');
-  if (myRole === 'solo') {
-    createRain(80);
-  } else if (myRole === 'host') {
-    createRain(80);
-    broadcastState();
-  } else if (myRole === 'guest') {
-    if (conn && conn.open) conn.send({ type: 'rain' });
-  }
-});
-
-/* ============================================================
-   MINIMIZADOR DOS CONTROLES
-   ============================================================ */
-const controlsBar = document.getElementById('controlsBar');
-const btnToggleControls = document.getElementById('btnToggleControls');
-
-btnToggleControls.addEventListener('click', () => {
-  controlsBar.classList.toggle('collapsed');
-  const collapsed = controlsBar.classList.contains('collapsed');
-  btnToggleControls.textContent = collapsed ? '☰' : '−';
-  btnToggleControls.title = collapsed ? 'Mostrar controles' : 'Minimizar controles';
-});
-
-/* ============================================================
-   LABORATÓRIO
-   ============================================================ */
-const BASE_TEMPERATURE = 300;
-let systemTemperature = BASE_TEMPERATURE;
-let experimentsCount = 0;
-let currentEntropy = 0;
-function tempScale(T) {
-  return Math.sqrt(T / BASE_TEMPERATURE) * (1 + 1.2 * Math.max(0, (T - BASE_TEMPERATURE) / 700));
-}
-function speedScale() { return tempScale(systemTemperature); }
-
-/* ============================================================
-   PARTÍCULA
-   ============================================================ */
-let nextParticleId = 1;
-
-class Particle {
-  constructor(x, y, opts = {}) {
-    this.x = x;
-    this.y = y;
-    const angle = opts.angle !== undefined ? opts.angle : Math.random() * Math.PI * 2;
-    const speed = (opts.speed !== undefined ? opts.speed : 0.5 + Math.random() * 1.5) * speedScale();
-    this.vx = Math.cos(angle) * speed;
-    this.vy = Math.sin(angle) * speed;
-    this.r = opts.r !== undefined ? opts.r : 2 + Math.random() * 4;
-    this.color = opts.color || (Math.random() < 0.5 ? BLUE : PINK);
-    this.gravity = opts.gravity !== undefined ? opts.gravity : 0;
-    this.dead = false;
-    this.id = (nextParticleId++) & 0xFFFF;
-  }
-  update(dt) {
-    // PAREDE CENTRAL IMPERMEÁVEL
-    const wallX = W / 2;
-    const nx = this.x + this.vx * dt;
-
-    if (this.color === BLUE) {
-      if (this.x < wallX && nx + this.r > wallX) {
-        this.x = wallX - this.r;
-        this.vx = -Math.abs(this.vx);
-      } else {
-        this.x = nx;
-      }
-    } else {
-      if (this.x > wallX && nx - this.r < wallX) {
-        this.x = wallX + this.r;
-        this.vx = Math.abs(this.vx);
-      } else {
-        this.x = nx;
-      }
-    }
-
-    if (this.x < this.r) { this.x = this.r; this.vx = Math.abs(this.vx); }
-    else if (this.x > W - this.r) { this.x = W - this.r; this.vx = -Math.abs(this.vx); }
-
-    this.y += this.vy * dt;
-    if (this.gravity) this.vy += this.gravity * dt;
-    if (this.y < this.r) { this.y = this.r; this.vy = Math.abs(this.vy); }
-    else if (this.y > H - this.r && !this.gravity) { this.y = H - this.r; this.vy = -Math.abs(this.vy); }
-  }
-  draw(ctx) {
-    const speed = Math.hypot(this.vx, this.vy);
-    const glow = Math.min(speed * 2, 18);
-    ctx.save();
-    ctx.shadowBlur = glow;
-    ctx.shadowColor = this.color;
-    ctx.fillStyle = this.color;
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-}
-
-const particles = [];
-const counterEl = document.getElementById('counter');
-
-function countColors() {
-  let b = 0, p = 0;
-  for (const part of particles) { if (part.color === BLUE) b++; else p++; }
-  return { b, p };
-}
-function updateCounter() {
-  const { b, p } = countColors();
-  counterEl.textContent = `🔵 ${b} · 🟠 ${p}`;
-}
-
-function recountScores() {
-  const wallX = W / 2;
-  let blueInBlue = 0;
-  let pinkInPink = 0;
-  for (const p of particles) {
-    if (p.color === BLUE && p.x < wallX) blueInBlue++;
-    else if (p.color === PINK && p.x > wallX) pinkInPink++;
-  }
-  if (blueInBlue !== myScore || pinkInPink !== herScore) {
-    myScore = blueInBlue;
-    herScore = pinkInPink;
-    updateDuelHUD();
-    checkWin();
-  }
-}
-
-/* ============================================================
-   EFEITOS
-   ============================================================ */
-const effects = [];
-function spawnRipple(x, y, color, maxR = 34, width = 2) {
-  effects.push({ type: 'ripple', x, y, r: 0, maxR, width, color, alpha: 1 });
-}
-function spawnFloatText(x, y, text, color) {
-  effects.push({ type: 'text', x, y, text, color, life: 1, vy: -0.9 });
-}
-function updateEffects() {
-  for (let i = effects.length - 1; i >= 0; i--) {
-    const e = effects[i];
-    if (e.type === 'ripple') {
-      e.r += 1.9; e.alpha -= 0.045;
-      if (e.alpha <= 0 || e.r > e.maxR) { effects.splice(i, 1); continue; }
-      ctx.save();
-      ctx.globalAlpha = Math.max(e.alpha, 0);
-      ctx.strokeStyle = e.color; ctx.lineWidth = e.width;
-      ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2); ctx.stroke();
-      ctx.restore();
-    } else if (e.type === 'text') {
-      e.y += e.vy; e.life -= 0.018;
-      if (e.life <= 0) { effects.splice(i, 1); continue; }
-      ctx.save();
-      ctx.globalAlpha = Math.max(e.life, 0);
-      ctx.fillStyle = e.color;
-      ctx.font = 'bold 18px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.shadowBlur = 12; ctx.shadowColor = e.color;
-      ctx.fillText(e.text, e.x, e.y);
-      ctx.restore();
-    }
-  }
-}
-
-/* ============================================================
-   ANIQUILAÇÃO POR COLISÃO
-   ============================================================ */
-const ANNIHILATION_CELL = 24;
-function resolveAnnihilations() {
-  const n = particles.length;
-  if (n < 2) return;
-  const grid = new Map();
-  for (let i = 0; i < n; i++) {
-    const p = particles[i];
-    const key = Math.floor(p.x / ANNIHILATION_CELL) + ':' + Math.floor(p.y / ANNIHILATION_CELL);
-    const bucket = grid.get(key);
-    if (bucket) bucket.push(i); else grid.set(key, [i]);
-  }
-  let anyDead = false;
-  for (let i = 0; i < n; i++) {
-    const p = particles[i];
-    if (p.dead) continue;
-    const cx = Math.floor(p.x / ANNIHILATION_CELL);
-    const cy = Math.floor(p.y / ANNIHILATION_CELL);
-    for (let dx = -1; dx <= 1 && !p.dead; dx++) {
-      for (let dy = -1; dy <= 1 && !p.dead; dy++) {
-        const bucket = grid.get((cx + dx) + ':' + (cy + dy));
-        if (!bucket) continue;
-        for (let k = 0; k < bucket.length; k++) {
-          const j = bucket[k];
-          if (j <= i) continue;
-          const q = particles[j];
-          if (q.dead) continue;
-          if (q.color === p.color) continue;
-          const ddx = p.x - q.x, ddy = p.y - q.y;
-          const rr = p.r + q.r;
-          if (ddx * ddx + ddy * ddy <= rr * rr) {
-            p.dead = true; q.dead = true; anyDead = true;
-            const mx = (p.x + q.x) * 0.5, my = (p.y + q.y) * 0.5;
-            spawnRipple(mx, my, '#ffffff', 40, 2.5);
-            spawnRipple(mx, my, p.color, 30, 1.8);
-            spawnRipple(mx, my, q.color, 30, 1.8);
-            break;
-          }
-        }
-      }
-    }
-  }
-  if (anyDead) {
-    for (let i = particles.length - 1; i >= 0; i--) {
-      if (particles[i].dead) particles.splice(i, 1);
-    }
-    updateCounter();
-  }
-}
-
-/* ============================================================
-   CRIAÇÃO DE PARTÍCULAS
-   ============================================================ */
-function createRain(count = 120) {
-  const available = MAX_PARTICLES - particles.length;
-  const n = Math.min(count, available);
-  for (let i = 0; i < n; i++) {
-    const x = Math.random() * W;
-    const y = -Math.random() * H * 0.3;
-    const angle = Math.PI / 2 + (Math.random() - 0.5) * 0.3;
-    const speed = 2 + Math.random() * 4;
-    particles.push(new Particle(x, y, {
-      angle, speed, r: 1.5 + Math.random() * 3, gravity: 0.05,
-      color: Math.random() < 0.5 ? BLUE : PINK,
-    }));
-  }
-  updateCounter();
-}
-
-// cria partículas SEMPRE da cor do jogador, dentro do domínio dele
-function spawnOwn(mx, my, player) {
-  const color = player === 'blue' ? BLUE : PINK;
-  const wallX = W / 2;
-  const n = Math.min(SPAWN_COUNT, MAX_PARTICLES - particles.length);
-  for (let i = 0; i < n; i++) {
-    let x = mx + (Math.random() - 0.5) * 16;
-    x = player === 'blue' ? Math.min(x, wallX - 8) : Math.max(x, wallX + 8);
-    const y = my + (Math.random() - 0.5) * 16;
-    particles.push(new Particle(x, y, { color, r: 2 + Math.random() * 3 }));
-  }
-  updateCounter();
-  return n;
-}
-
-function clearAll() {
-  particles.length = 0;
-  myScore = 0; herScore = 0;
-  myAnnihilations = 0; herAnnihilations = 0;
-  gameOver = false;
-  resetEnergy();
-  updateCounter();
-  updateDuelHUD();
-}
-
-/* ============================================================
-   MULTIPLAYER (PeerJS)
-   ============================================================ */
-let peer = null;
-let conn = null;
-let isOnline = false;
-let myRole = 'solo';
-let broadcastAcc = 0;
-
-const PEER_CONFIG = {
-  debug: 2,
-  config: {
-    iceServers: [
-      { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:stun1.l.google.com:19302' },
-      { urls: 'stun:stun2.l.google.com:19302' },
-      { urls: 'stun:stun3.l.google.com:19302' },
-    ]
-  }
+const $=s=>document.querySelector(s),cv=$('#cv'),ctx=cv.getContext('2d'),stage=$('#stage');
+const S3=Math.sqrt(3),R=n=>[...Array(n).keys()],UP='#ff3b5c',DN='#3b8bff',AC='#35ffc4';
+const hexV=(cx,cy,a)=>R(6).map(k=>[cx+Math.cos(a+k*Math.PI/3),cy+Math.sin(a+k*Math.PI/3)]);
+const b1=(a,b,d)=>d<1.05;
+const LAT={
+ square:{name:'Quadrada',info:'Faces de 4 spins. FM: 4 iguais. AFM: xadrez.',gen(){const s=[],p=[];for(const i of R(6))for(const j of R(6)){s.push([i,j]);if(i<5&&j<5)p.push([[i,j],[i+1,j],[i+1,j+1],[i,j+1]])}return{sites:s,polys:p,bond:b1}}},
+ tri:{name:'Triangular',info:'Faces de 3 spins. Frustrada: AFM é impossível, só vale FM.',gen(){const s=[];for(const i of R(6))for(const j of R(6))s.push([i+j/2,j*S3/2]);return{sites:s,tri:1,bond:b1}}},
+ honey:{name:'Favo (honeycomb)',info:'Hexágonos de 6 spins. AFM hexagonal vale muito.',gen(){const p=[];for(const i of R(4))for(const j of R(3))p.push(hexV(S3*(i+j/2),1.5*j,Math.PI/6));return{polys:p,bond:b1}}},
+ kagome:{name:'Kagome',info:'Triângulos (só FM) e hexágonos (FM ou AFM). Frustração pura.',gen(){const p=[];for(const i of R(3))for(const j of R(3))p.push(hexV(2*(i+j/2),S3*j,0));return{polys:p,tri:1,bond:b1}}},
+ bcc:{name:'bcc 2D (centrada)',info:'Quadrada com spin no centro: triângulos de 3 spins ao redor de cada centro.',gen(){const s=[];for(const i of R(5))for(const j of R(5))s.push([i,j]);for(const i of R(4))for(const j of R(4))s.push([i+.5,j+.5]);return{sites:s,tri:1,bond:(a,b,d)=>d<.75||(d<1.05&&a[0]%1===0&&a[1]%1===0&&b[0]%1===0&&b[1]%1===0)}}},
+ lieb:{name:'Lieb',info:'Ciclos de 8 spins em volta dos buracos. Difícil, vale muito.',gen(){const s=[],p=[];for(const x of R(7))for(const y of R(7))if(!(x%2&&y%2))s.push([x,y]);for(const hx of [1,3,5])for(const hy of [1,3,5])p.push([[hx-1,hy-1],[hx,hy-1],[hx+1,hy-1],[hx+1,hy],[hx+1,hy+1],[hx,hy+1],[hx-1,hy+1],[hx-1,hy]]);return{sites:s,polys:p,bond:b1}}}
 };
-
-const statusPill = document.getElementById('statusPill');
-const statusText = document.getElementById('statusText');
-
-function setStatus(text, kind) {
-  statusPill.classList.remove('online', 'offline');
-  if (kind === 'online') statusPill.classList.add('online');
-  if (kind === 'offline') statusPill.classList.add('offline');
-  statusText.textContent = text;
-  statusPill.classList.add('show');
+function build(id){
+ const c=LAT[id].gen(),m=new Map(),pts=[];
+ const add=(x,y)=>{const k=Math.round(x*100)+','+Math.round(y*100);if(!m.has(k)){m.set(k,pts.length);pts.push([x,y])}return m.get(k)};
+ (c.sites||[]).forEach(p=>add(p[0],p[1]));
+ const faces=(c.polys||[]).map(p=>({v:p.map(q=>add(q[0],q[1]))}));
+ const n=pts.length,adj=R(n).map(()=>new Set()),bonds=[];let minD=9;
+ for(let a=0;a<n;a++)for(let b=a+1;b<n;b++){const d=Math.hypot(pts[a][0]-pts[b][0],pts[a][1]-pts[b][1]);if(c.bond(pts[a],pts[b],d)){adj[a].add(b);adj[b].add(a);bonds.push([a,b]);minD=Math.min(minD,d)}}
+ if(c.tri)for(const[a,b]of bonds)for(const k of adj[a])if(k>b&&adj[b].has(k))faces.push({v:[a,b,k]});
+ const fOf=R(n).map(()=>[]);faces.forEach(f=>f.v.forEach(i=>fOf[i].push(f)));
+ return{pts,bonds,faces,fOf,n,minD};
 }
-
-function updateDuelLabels() {
-  const blueName = document.getElementById('blueName');
-  const pinkName = document.getElementById('pinkName');
-
-  if (myRole === 'guest') {
-    blueName.innerHTML = '<span class="devil-blue">😈</span> BOB 1';
-    pinkName.innerHTML = 'BOB 2 <span class="devil-pink">😈</span> (você)';
-  } else {
-    blueName.innerHTML = '<span class="devil-blue">😈</span> BOB 1 (você)';
-    pinkName.innerHTML = 'BOB 2 <span class="devil-pink">😈</span>';
-  }
+let L,sp,st,tm,bt,flash=[],pops=[],hint=null,score=0,level=1,cleared=0,combo=0,comboT=0,ent=0,noiseT=3,glitch=0,state='menu',lid='square',W=0,H=0,sc=1,ox=0,oy=0,rad=20,now=0,last=0,best={};
+const dpr=Math.min(2,window.devicePixelRatio||1);
+try{best=JSON.parse(localStorage.getItem('spinglitch')||'{}')}catch(e){}
+const X=x=>ox+x*sc,Y=y=>oy+y*sc;
+let AC_;function beep(f,d=.08,v=.035,t='square'){try{AC_=AC_||new AudioContext();const o=AC_.createOscillator(),g=AC_.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;o.connect(g);g.connect(AC_.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,AC_.currentTime+d);o.stop(AC_.currentTime+d)}catch(e){}}
+function ordType(f){const v=f.v;for(const i of v)if(st[i])return 0;let fm=1,af=v.length%2==0;for(let k=0;k<v.length;k++){if(sp[v[k]]==sp[v[(k+1)%v.length]]){af=0}else fm=0}return fm?1:af?2:0}
+function sanitize(nw){const set=new Set(nw);for(let it=0;it<80;it++){let ch=0;for(const f of L.faces)if(ordType(f)){const c=f.v.filter(i=>set.has(i));if(c.length){sp[c[(Math.random()*c.length)|0]]*=-1;ch=1}}if(!ch)break}}
+function layout(){
+ const r=stage.getBoundingClientRect();W=r.width;H=r.height;cv.width=W*dpr;cv.height=H*dpr;if(!L)return;
+ const xs=L.pts.map(p=>p[0]),ys=L.pts.map(p=>p[1]),mx=Math.min(...xs),my=Math.min(...ys),w=Math.max(...xs)-mx,h=Math.max(...ys)-my,pad=36;
+ sc=Math.min((W-2*pad)/(w||1),(H-2*pad)/(h||1));ox=(W-w*sc)/2-mx*sc;oy=(H-h*sc)/2-my*sc;rad=Math.min(L.minD*sc*.36,30);
 }
-
-// partícula mais próxima do toque (dentro da folga), ou -1
-function findParticleAt(mx, my, tol, onlyColor) {
-  let best = -1, bestD = Infinity;
-  for (let i = 0; i < particles.length; i++) {
-    const p = particles[i];
-    if (onlyColor && p.color !== onlyColor) continue;
-    const dx = p.x - mx, dy = p.y - my;
-    const d2 = dx * dx + dy * dy;
-    const reach = p.r + tol;
-    if (d2 <= reach * reach && d2 < bestD) { bestD = d2; best = i; }
-  }
-  return best;
+function newGame(){
+ L=build(lid);const n=L.n;sp=R(n).map(()=>Math.random()<.5?1:-1);st=Array(n).fill(0);tm=Array(n).fill(0);bt=Array(n).fill(-9);
+ sanitize(R(n));flash=[];pops=[];hint=null;score=0;level=1;cleared=0;combo=0;comboT=0;ent=0;noiseT=3;glitch=0;layout();$('#info').textContent=LAT[lid].info;$('#bs').textContent=best[lid]||0;
 }
-
-// tocar em partícula adversária aniquila;
-// tocar no vazio do SEU domínio cria partículas e gasta energia.
-function applyPlayerClick(mx, my, player, fromRemote, broadcastNow, touch = false) {
-  if (gameOver) return;
-
-  const ownColor = player === 'blue' ? BLUE : PINK;
-  const enemyColor = player === 'blue' ? PINK : BLUE;
-  const inOwnDomain = player === 'blue' ? (mx < W / 2) : (mx > W / 2);
-  const tol = (fromRemote ? HIT_TOLERANCE_REMOTE : HIT_TOLERANCE_LOCAL) + (touch ? HIT_TOUCH_BONUS : 0);
-
-  const hit = findParticleAt(mx, my, tol, enemyColor);
-  if (hit >= 0) {
-    const p = particles[hit];
-    spawnRipple(p.x, p.y, '#ffffff', 44, 3);
-    spawnRipple(p.x, p.y, p.color, 30, 2);
-    if (p.color === enemyColor) {
-      if (player === 'blue') myAnnihilations++; else herAnnihilations++;
-      energy[player] = Math.min(ENERGY_MAX, energy[player] + ENERGY_PER_KILL);
-      refreshReady(player);
-      spawnFloatText(p.x, p.y, '💥 +⚡', p.color);
-      pulseEnergy(player);
-    }
-    particles.splice(hit, 1);
-    updateCounter();
-  } else if (inOwnDomain) {
-    if (ready[player] && energy[player] >= SPAWN_COST) {
-      if (spawnOwn(mx, my, player) > 0) energy[player] -= SPAWN_COST;
-      refreshReady(player);
-      spawnRipple(mx, my, ownColor, 22, 1.5);
-    } else {
-      flashNoEnergy(player);
-      spawnRipple(mx, my, '#ffffff', 14, 1);
-    }
-  } else {
-    spawnRipple(mx, my, '#ffffff', 20, 1);
-  }
-
-  if (broadcastNow && myRole === 'host' && conn && conn.open) {
-    broadcastState();
-  }
+function shake(){stage.classList.remove('shake');void stage.offsetWidth;stage.classList.add('shake')}
+function scan(){
+ const hit=[];for(const f of L.faces){const t=ordType(f);if(t)hit.push([f,t])}
+ if(!hit.length)return;
+ combo=comboT>0?combo+1:1;comboT=4.5;const mult=Math.min(combo,9),mf=hit.length>1?hit.length:1;
+ for(const[f,t]of hit){
+  const n=f.v.length,pts=({3:30,4:60,6:140,8:260})[n]*(t==2?2:1)*mult*mf;score+=pts;
+  f.v.forEach(i=>{st[i]=1;tm[i]=.5+Math.random()*.3});
+  let cx=0,cy=0;f.v.forEach(i=>{cx+=L.pts[i][0];cy+=L.pts[i][1]});
+  flash.push({f,t:0,k:t});pops.push({x:X(cx/n),y:Y(cy/n),s:(t==2?'AFM':'FM')+' +'+pts,t:0,k:t});
+  ent=Math.max(0,ent-4-n*1.5);cleared++;
+ }
+ level=1+Math.floor(cleared/6);glitch=.7;shake();
+ [0,60,120,180].forEach((d,k)=>setTimeout(()=>beep(300+k*130+Math.random()*90,.09,.04,'square'),d));
 }
-
-// previsão visual no convidado (o host é quem decide de verdade)
-function predictGuestVisuals(mx, my, touch = false) {
-  const hit = findParticleAt(mx, my, HIT_TOLERANCE_REMOTE + (touch ? HIT_TOUCH_BONUS : 0), BLUE);
-  if (hit >= 0) {
-    const p = particles[hit];
-    spawnRipple(p.x, p.y, '#ffffff', 44, 3);
-    spawnRipple(p.x, p.y, p.color, 30, 2);
-    spawnFloatText(p.x, p.y, p.color === BLUE ? '💥' : '✖', p.color === BLUE ? BLUE : '#ffffff');
-    if (p.color === BLUE) {
-      energy.pink = Math.min(ENERGY_MAX, energy.pink + ENERGY_PER_KILL);
-      refreshReady('pink');
-      updateEnergyBars();
-      spawnFloatText(p.x, p.y - 16, '+⚡', PINK);
-      pulseEnergy('pink');
-    }
-    particles.splice(hit, 1);
-    updateCounter();
-  } else if (mx > W / 2) {
-    if (ready.pink && energy.pink >= SPAWN_COST) {
-      energy.pink -= SPAWN_COST;
-      refreshReady('pink');
-      updateEnergyBars();
-      spawnRipple(mx, my, PINK, 22, 1.5);
-    } else {
-      flashNoEnergy('pink');
-      spawnRipple(mx, my, '#ffffff', 14, 1);
-    }
-  } else {
-    spawnRipple(mx, my, '#ffffff', 20, 1);
-  }
+function over(){
+ state='over';glitch=1.2;shake();if(score>(best[lid]||0)){best[lid]=score;try{localStorage.setItem('spinglitch',JSON.stringify(best))}catch(e){}}
+ $('#bs').textContent=best[lid]||0;beep(70,.5,.06,'sawtooth');
+ showOv('SISTEMA TERMALIZOU',`<p>A entropia chegou a 100%. A ordem virou ruído.</p><p>Pontos: <b>${score}</b> · Nível ${level} · Recorde ${best[lid]}</p>`,'Jogar de novo');
 }
-
-canvas.addEventListener('pointerdown', (e) => {
-  if (gameOver) return;
-  const rect = canvas.getBoundingClientRect();
-  const mx = e.clientX - rect.left;
-  const my = e.clientY - rect.top;
-  const touch = e.pointerType === 'touch' || e.pointerType === 'pen';
-
-  if (myRole === 'solo') {
-    // modo treino: você joga como o Bob 1 (azul)
-    applyPlayerClick(mx, my, 'blue', false, false, touch);
-    return;
+function showOv(t,html,btn){$('#ov').style.display='flex';$('#ov').innerHTML=`<div class="box"><h2>${t}</h2>${html}<button class="btn" id="go">${btn}</button></div>`;$('#go').onclick=start;$('#go').focus()}
+function start(){newGame();state='play';$('#ov').style.display='none';beep(520,.1)}
+function update(dt){
+ ent+=(2+.5*level)*dt;comboT=Math.max(0,comboT-dt);
+ noiseT-=dt;
+ if(noiseT<=0){noiseT=Math.max(.8,3.4-.22*level)*(.6+Math.random()*.8);const ok=R(L.n).filter(i=>!st[i]);if(ok.length){const i=ok[(Math.random()*ok.length)|0];sp[i]*=-1;bt[i]=now;glitch=Math.max(glitch,.25);beep(110,.1,.03,'sawtooth');scan()}}
+ const nw=[];
+ for(let i=0;i<L.n;i++){
+  if(st[i]==1){if((tm[i]-=dt)<=0){st[i]=2;tm[i]=.3+Math.random()*.4}}
+  else if(st[i]==2){if((tm[i]-=dt)<=0){st[i]=0;sp[i]=Math.random()<.5?1:-1;bt[i]=now;nw.push(i)}}
+ }
+ if(nw.length)sanitize(nw);
+ if(ent>=100)over();
+}
+function arrow(x,y,r,up,col){
+ const s=up?-1:1,h=r*.55;ctx.strokeStyle=col;ctx.lineWidth=Math.max(2,r*.17);ctx.lineCap='round';ctx.lineJoin='round';
+ ctx.beginPath();ctx.moveTo(x,y-s*h);ctx.lineTo(x,y+s*h);ctx.moveTo(x-h*.55,y+s*h*.2);ctx.lineTo(x,y+s*h);ctx.lineTo(x+h*.55,y+s*h*.2);ctx.stroke();
+}
+function draw(){
+ ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);if(!L)return;
+ for(const f of flash){const a=.5*(1-f.t/.8);if(a<=0)continue;ctx.fillStyle=f.k==2?`rgba(53,255,196,${a})`:`rgba(255,214,90,${a})`;ctx.beginPath();f.f.v.forEach((i,k)=>{const p=L.pts[i];k?ctx.lineTo(X(p[0]),Y(p[1])):ctx.moveTo(X(p[0]),Y(p[1]))});ctx.closePath();ctx.fill()}
+ ctx.lineWidth=2;
+ for(const[a,b]of L.bonds){const pa=L.pts[a],pb=L.pts[b],eq=sp[a]==sp[b]&&!st[a]&&!st[b];ctx.strokeStyle=eq?'#3a2f55':'#1d2a46';ctx.beginPath();ctx.moveTo(X(pa[0]),Y(pa[1]));ctx.lineTo(X(pb[0]),Y(pb[1]));ctx.stroke()}
+ ctx.textAlign='center';ctx.textBaseline='middle';
+ for(let i=0;i<L.n;i++){
+  const x=X(L.pts[i][0]),y=Y(L.pts[i][1]),col=sp[i]>0?UP:DN;
+  if(st[i]==0){
+   const k=Math.max(0,1-(now-bt[i])/.3),r=rad*(1+.3*k);
+   ctx.shadowColor=col;ctx.shadowBlur=14+k*22;ctx.fillStyle=col+'30';ctx.strokeStyle=col;ctx.lineWidth=2.5;
+   ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();ctx.stroke();ctx.shadowBlur=0;arrow(x,y,r,sp[i]>0,'#fff');
+  }else if(st[i]==1){
+   const j=()=>(Math.random()-.5)*rad*.9;ctx.fillStyle='#000';ctx.fillRect(x-rad,y-rad,rad*2,rad*2);
+   for(let b=0;b<3;b++){ctx.globalAlpha=.75;ctx.fillStyle=Math.random()<.5?AC:col;ctx.fillRect(x-rad+Math.random()*rad,y-rad+Math.random()*rad*2,rad*(.4+Math.random()),rad*.22)}
+   ctx.globalAlpha=1;ctx.font=`bold ${rad*1.25}px ui-monospace,monospace`;ctx.fillStyle=['#fff',AC,col][(Math.random()*3)|0];ctx.fillText(Math.random()<.5?'0':'1',x+j()*.4,y+j()*.4);
+  }else{
+   ctx.globalAlpha=.15+Math.random()*.4;ctx.fillStyle=AC;ctx.font=`${rad*.8}px ui-monospace,monospace`;ctx.fillText(Math.random()<.5?'0':'1',x,y);ctx.globalAlpha=1;
   }
-
-  if (myRole === 'host') {
-    applyPlayerClick(mx, my, 'blue', false, false, touch);
-    return;
-  }
-
-  predictGuestVisuals(mx, my, touch);
-
-  if (conn && conn.open) {
-    conn.send({ type: 'click', x: mx / W, y: my / H, t: touch ? 1 : 0 });
-  }
+ }
+ if(hint&&hint.t<2.4){const p=L.pts[hint.i],r=rad*(1.5+.3*Math.sin(hint.t*10));ctx.strokeStyle=AC;ctx.lineWidth=2;ctx.setLineDash([5,4]);ctx.beginPath();ctx.arc(X(p[0]),Y(p[1]),r,0,7);ctx.stroke();ctx.setLineDash([])}
+ for(const p of pops){const a=1-p.t/.9;if(a<=0)continue;ctx.globalAlpha=a;ctx.font='bold 17px ui-monospace,monospace';ctx.fillStyle=p.k==2?AC:'#ffd65a';ctx.shadowColor='#000';ctx.shadowBlur=6;ctx.fillText(p.s,p.x,p.y-p.t*40);ctx.shadowBlur=0;ctx.globalAlpha=1}
+ if(glitch>0){
+  ctx.setTransform(1,0,0,1,0,0);const k=Math.ceil(glitch*9);
+  for(let n=0;n<k;n++){const sy=Math.random()*cv.height,sh=4+Math.random()*28*dpr,dx=(Math.random()-.5)*60*glitch*dpr;ctx.drawImage(cv,0,sy,cv.width,sh,dx,sy,cv.width,sh)}
+  ctx.globalAlpha=.5;for(let n=0;n<Math.ceil(k/2);n++){ctx.fillStyle=Math.random()<.5?AC:UP;ctx.fillRect(Math.random()*cv.width,Math.random()*cv.height,(20+Math.random()*120)*dpr,1.5*dpr)}ctx.globalAlpha=1;
+ }
+}
+function hud(){
+ $('#sc').textContent=score;$('#lv').textContent=level;$('#cb').textContent='x'+Math.min(combo,9)+(comboT>0?'':' ');
+ const f=$('#fill');f.style.width=Math.min(100,ent)+'%';f.style.background=`hsl(${150-150*Math.min(1,ent/100)} 90% 55%)`;
+ let e=0,m=0,c=0;for(const[a,b]of L.bonds)if(!st[a]&&!st[b])e-=sp[a]*sp[b];for(let i=0;i<L.n;i++)if(!st[i]){m+=sp[i];c++}
+ $('#en').textContent=(e/L.bonds.length).toFixed(2);$('#mg').textContent=(c?m/c:0).toFixed(2);
+}
+function tick(ts){
+ const dt=Math.min(.05,(ts-last)/1000);last=ts;now=ts/1000;
+ if(state=='play')update(dt);
+ flash.forEach(f=>f.t+=dt);pops.forEach(p=>p.t+=dt);flash=flash.filter(f=>f.t<.8);pops=pops.filter(p=>p.t<.9);if(hint)hint.t+=dt;glitch=Math.max(0,glitch-dt*1.6);
+ draw();if(L)hud();requestAnimationFrame(tick);
+}
+cv.addEventListener('pointerdown',e=>{
+ if(state!='play')return;const r=cv.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top;let bi=-1,bd=rad*1.7;
+ for(let i=0;i<L.n;i++){const d=Math.hypot(X(L.pts[i][0])-px,Y(L.pts[i][1])-py);if(d<bd){bd=d;bi=i}}
+ if(bi<0||st[bi])return;sp[bi]*=-1;bt[bi]=now;hint=null;beep(sp[bi]>0?440:330,.06);scan();
 });
-
-// snapshot binário (12 bytes/partícula) com velocidade e número de sequência
-let stateSeq = 0;
-function broadcastState() {
-  if (!conn || !conn.open) return;
-  const winner = gameOver ? (myScore >= WIN_SCORE ? 'blue' : 'pink') : null;
-
-  const n = particles.length;
-  const buf = new ArrayBuffer(n * 12);
-  const dv = new DataView(buf);
-  for (let i = 0; i < n; i++) {
-    const p = particles[i];
-    const o = i * 12;
-    dv.setUint16(o,      p.id);
-    dv.setInt16 (o + 2,  Math.round(p.x / W * 10000));
-    dv.setInt16 (o + 4,  Math.round(p.y / H * 10000));
-    dv.setInt16 (o + 6,  Math.round(p.vx / W * 100000));
-    dv.setInt16 (o + 8,  Math.round(p.vy / H * 100000));
-    dv.setUint8 (o + 10, Math.min(255, Math.round(p.r * 10)));
-    dv.setUint8 (o + 11, (p.color === BLUE ? 0 : 1) | (p.gravity ? 2 : 0));
-  }
-
-  conn.send({
-    type: 'state',
-    seq: ++stateSeq,
-    buf,
-    s: [myScore, herScore, myAnnihilations, herAnnihilations],
-    e: [Math.round(energy.blue * 100) / 100, Math.round(energy.pink * 100) / 100, ready.blue ? 1 : 0, ready.pink ? 1 : 0],
-    w: winner,
-  });
+function doHint(){
+ if(state!='play')return;for(const i of R(L.n).sort(()=>Math.random()-.5)){if(st[i])continue;sp[i]*=-1;const ok=L.fOf[i].some(f=>ordType(f));sp[i]*=-1;if(ok){hint={i,t:0};ent=Math.min(99,ent+6);return}}
 }
-
-// convidado simula localmente e corrige suavemente em direção ao host
-let lastSeq = 0;
-const SNAP_DIST = 80;
-const CORRECTION = 0.35;
-
-function applyRemoteState(data) {
-  if (data.seq <= lastSeq && lastSeq - data.seq < 100000) return;
-  lastSeq = data.seq;
-
-  const u8 = new Uint8Array(data.buf);
-  const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
-  const n = Math.floor(u8.length / 12);
-
-  const byId = new Map();
-  for (const p of particles) byId.set(p.id, p);
-  const next = [];
-
-  for (let i = 0; i < n; i++) {
-    const o = i * 12;
-    const id = dv.getUint16(o);
-    const tx = dv.getInt16(o + 2) / 10000 * W;
-    const ty = dv.getInt16(o + 4) / 10000 * H;
-    const vx = dv.getInt16(o + 6) / 100000 * W;
-    const vy = dv.getInt16(o + 8) / 100000 * H;
-    const r  = dv.getUint8(o + 10) / 10;
-    const fl = dv.getUint8(o + 11);
-
-    let p = byId.get(id);
-    if (!p) {
-      p = new Particle(tx, ty, { r });
-      p.id = id;
-    } else {
-      const dx = tx - p.x, dy = ty - p.y;
-      if (dx * dx + dy * dy > SNAP_DIST * SNAP_DIST) { p.x = tx; p.y = ty; }
-      else { p.x += dx * CORRECTION; p.y += dy * CORRECTION; }
-    }
-    p.r = r;
-    p.vx = vx;
-    p.vy = vy;
-    p.color = (fl & 1) ? PINK : BLUE;
-    p.gravity = (fl & 2) ? 0.05 : 0;
-    next.push(p);
-  }
-
-  particles.length = 0;
-  for (const p of next) particles.push(p);
-
-  [myScore, herScore, myAnnihilations, herAnnihilations] = data.s;
-  if (data.e) { energy.blue = data.e[0]; energy.pink = data.e[1]; ready.blue = !!data.e[2]; ready.pink = !!data.e[3]; updateEnergyBars(); }
-  updateDuelHUD();
-  updateCounter();
-
-  if (data.w && !gameOver) {
-    gameOver = true;
-    showWinModal(data.w);
-  }
-}
-
-function setupConn() {
-  conn.on('open', () => {
-    console.log('[peer] ✅ conexão aberta!');
-    setStatus('Conectado! Boa sorte 🎮', 'online');
-    if (myRole === 'guest') conn.send({ type: 'hello' });
-    if (myRole === 'host' && particles.length < 40) createRain(80);
-  });
-
-  conn.on('data', (data) => {
-    if (myRole === 'host') {
-      if (data.type === 'click') {
-        applyPlayerClick(data.x * W, data.y * H, 'pink', true, true, !!data.t);
-      } else if (data.type === 'rain') {
-        createRain(120);
-        broadcastState();
-      } else if (data.type === 'clear') {
-        clearAll();
-        broadcastState();
-      }
-    } else {
-      if (data.type === 'state') applyRemoteState(data);
-    }
-  });
-
-  conn.on('close', () => {
-    console.log('[peer] ❌ conexão fechada');
-    setStatus('Conexão perdida ❌', 'offline');
-    if (myRole === 'guest') { particles.length = 0; updateCounter(); }
-  });
-
-  conn.on('error', (err) => {
-    console.error('[peer] erro na conexão:', err);
-    setStatus('Erro na conexão', 'offline');
-  });
-}
-
-function startHosting(sala) {
-  myRole = 'host';
-  isOnline = true;
-  document.body.classList.remove('guest-view');
-  updateDuelLabels();
-  setStatus('Aguardando Bob 2 entrar...', 'waiting');
-
-  console.log('[host] criando Peer com id:', sala);
-  peer = new Peer(sala, PEER_CONFIG);
-
-  peer.on('open', (id) => {
-    console.log('[host] ✅ Peer aberto com id:', id);
-    setStatus('Sala pronta. Compartilhe o link!', 'waiting');
-  });
-
-  peer.on('connection', (c) => {
-    console.log('[host] 📥 alguém conectou:', c.peer);
-    if (conn) { c.close(); return; }
-    conn = c;
-    setupConn();
-  });
-
-  peer.on('error', (err) => {
-    console.error('[host] ❌ erro:', err);
-    setStatus('Erro: ' + err.type, 'offline');
-    document.getElementById('onlineStatusLine').classList.add('error');
-    document.getElementById('onlineStatusText').textContent = 'Erro: ' + err.type;
-  });
-}
-
-function startGuesting(sala) {
-  myRole = 'guest';
-  isOnline = true;
-  document.body.classList.add('guest-view');
-  updateDuelLabels();
-  setStatus('Conectando à sala do Bob 1...', 'waiting');
-  particles.length = 0;
-  updateCounter();
-
-  const labPanelEl = document.getElementById('labPanel');
-  if (labPanelEl) labPanelEl.style.display = 'none';
-
-  const btnLabEl = document.getElementById('btnLab');
-  if (btnLabEl) btnLabEl.style.display = 'none';
-
-  console.log('[guest] criando Peer anônimo...');
-  peer = new Peer(PEER_CONFIG);
-
-  peer.on('open', (id) => {
-    console.log('[guest] ✅ Peer aberto com id:', id);
-    console.log('[guest] conectando ao host:', sala);
-    // canal não ordenado + binário, para pacote atrasado não travar os seguintes
-    conn = peer.connect(sala, { reliable: false, serialization: 'binary' });
-    setupConn();
-  });
-
-  peer.on('error', (err) => {
-    console.error('[guest] ❌ erro:', err);
-    setStatus('Não consegui conectar 😢', 'offline');
-  });
-}
-
-function buildInviteURL() {
-  const base = location.origin + location.pathname;
-  const params = new URLSearchParams(location.hash.replace('#', ''));
-  const sala = params.get('host') || params.get('join');
-  return base + '#join=' + sala;
-}
-
-function openOnlineModal() {
-  if (isOnline) {
-    openModal('onlineModal');
-    document.getElementById('shareBox').style.display = 'block';
-    document.getElementById('onlineStatusLine').classList.add('ready');
-    if (myRole === 'host') {
-      document.getElementById('onlineStatusText').textContent = 'Sala ativa — compartilhe o link!';
-      document.getElementById('shareURL').value = buildInviteURL();
-    } else {
-      document.getElementById('onlineStatusText').textContent = 'Você é o Bob 2 🎮';
-      document.getElementById('shareURL').value = location.href;
-    }
-    return;
-  }
-
-  const sala = 'termo-' + Math.random().toString(36).slice(2, 8);
-  history.replaceState(null, '', '#host=' + sala);
-
-  document.getElementById('onlineStatusLine').classList.add('ready');
-  document.getElementById('onlineStatusText').textContent = 'Sala ativa — compartilhe o link!';
-  document.getElementById('shareURL').value = buildInviteURL();
-  document.getElementById('shareBox').style.display = 'block';
-  openModal('onlineModal');
-
-  startHosting(sala);
-}
-
-document.getElementById('btnOnline').addEventListener('click', openOnlineModal);
-
-document.getElementById('btnCopyURL').addEventListener('click', async () => {
-  const input = document.getElementById('shareURL');
-  input.select();
-  try {
-    await navigator.clipboard.writeText(input.value);
-    document.getElementById('btnCopyURL').textContent = '✅ Copiado!';
-    setTimeout(() => { document.getElementById('btnCopyURL').textContent = '📋 Copiar link'; }, 1800);
-  } catch {
-    document.execCommand('copy');
-  }
-});
-
-(function detectRoom() {
-  const hash = location.hash.replace('#', '');
-  if (!hash) return;
-  const params = new URLSearchParams(hash);
-
-  const hostSala = params.get('host');
-  const joinSala = params.get('join');
-
-  if (hostSala) {
-    console.log('[sala] entrando como HOST:', hostSala);
-    startHosting(hostSala);
-  } else if (joinSala) {
-    console.log('[sala] entrando como GUEST:', joinSala);
-    startGuesting(joinSala);
-  }
-})();
-
-/* ============================================================
-   BOTÕES
-   ============================================================ */
-document.getElementById('btnClear').addEventListener('click', () => {
-  if (myRole === 'guest') {
-    if (conn && conn.open) conn.send({ type: 'clear' });
-    return;
-  }
-  clearAll();
-});
-
-/* ============================================================
-   DESENHO DOS DOMÍNIOS
-   ============================================================ */
-function drawDomains() {
-  ctx.save();
-  ctx.fillStyle = 'rgba(137, 180, 250, 0.018)';
-  ctx.fillRect(0, 0, W / 2, H);
-  ctx.fillStyle = 'rgba(250, 179, 135, 0.018)';
-  ctx.fillRect(W / 2, 0, W / 2, H);
-
-  const grad = ctx.createLinearGradient(W / 2 - 24, 0, W / 2 + 24, 0);
-  grad.addColorStop(0,    'rgba(137, 180, 250, 0)');
-  grad.addColorStop(0.45, 'rgba(137, 180, 250, 0.35)');
-  grad.addColorStop(0.5,  'rgba(255, 255, 255, 0.55)');
-  grad.addColorStop(0.55, 'rgba(250, 179, 135, 0.35)');
-  grad.addColorStop(1,    'rgba(250, 179, 135, 0)');
-  ctx.fillStyle = grad;
-  ctx.fillRect(W / 2 - 24, 0, 48, H);
-  ctx.restore();
-}
-
-/* ============================================================
-   LOOP
-   ============================================================ */
-let last = performance.now();
-function loop(now) {
-  const dt = Math.min((now - last) / 16.67, 3);
-  last = now;
-
-  ctx.fillStyle = 'rgba(30, 30, 46, 0.25)';
-  ctx.fillRect(0, 0, W, H);
-  drawDomains();
-
-  if (myRole === 'guest') {
-    for (let i = particles.length - 1; i >= 0; i--) {
-      const p = particles[i];
-      p.update(dt);
-      if (p.gravity && p.y > H + 50) { particles.splice(i, 1); continue; }
-      p.draw(ctx);
-    }
-  } else {
-    resolveAnnihilations();
-    regenEnergy(dt);
-    for (let i = particles.length - 1; i >= 0; i--) {
-      const p = particles[i];
-      p.update(dt);
-      if (p.gravity && p.y > H + 50) { particles.splice(i, 1); updateCounter(); continue; }
-      p.draw(ctx);
-    }
-    recountScores();
-    if (myRole === 'host' && conn && conn.open) {
-      broadcastAcc += dt * 16.67;
-      if (broadcastAcc >= 40) { broadcastAcc = 0; broadcastState(); }
-    }
-  }
-
-  updateEffects();
-  requestAnimationFrame(loop);
-}
-
-/* ============================================================
-   MODAIS
-   ============================================================ */
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-
-
-document.querySelectorAll('[data-close]').forEach(btn => {
-  btn.addEventListener('click', (e) => closeModal(e.target.dataset.close));
-});
-document.querySelectorAll('.modal').forEach(modal => {
-  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(modal.id); });
-});
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') document.querySelectorAll('.modal.open').forEach(m => closeModal(m.id));
-});
-
-/* ============================================================
-   INICIALIZAÇÃO
-   ============================================================ */
-if (myRole !== 'guest') createRain(60);
-if (myRole === 'guest') {
-  const labPanelEl = document.getElementById('labPanel');
-  if (labPanelEl) labPanelEl.style.display = 'none';
-}
-updateCounter();
-updateDuelHUD();
-updateEnergyBars();
-updateDuelLabels();
-requestAnimationFrame(loop);
-
-/* ============================================================
-   PAINEL DO LABORATÓRIO
-   ============================================================ */
-const tempSlider    = document.getElementById('tempSlider');
-const tempValueEl   = document.getElementById('tempValue');
-const entropyValueEl= document.getElementById('entropyValue');
-const entropyFillEl = document.getElementById('entropyFill');
-const entropyStateEl= document.getElementById('entropyState');
-const chaosValueEl  = document.getElementById('chaosValue');
-const chaosStateEl  = document.getElementById('chaosState');
-const labPanel      = document.getElementById('labPanel');
-const labToggle     = document.getElementById('labToggle');
-
-function applyTemperature(newT) {
-  const ratio = tempScale(newT) / tempScale(systemTemperature);
-  for (const p of particles) { p.vx *= ratio; p.vy *= ratio; }
-  systemTemperature = newT;
-  tempValueEl.textContent = Math.round(newT) + ' K';
-  const t = Math.max(0, Math.min(1, (newT - 1) / 999));
-  const r = Math.round(137 + t * (243 - 137));
-  const g = Math.round(180 + t * (139 - 180));
-  const b = Math.round(250 + t * (168 - 250));
-  tempValueEl.style.color = `rgb(${r}, ${g}, ${b})`;
-}
-
-tempSlider.addEventListener('input', (e) => applyTemperature(parseFloat(e.target.value)));
-tempSlider.addEventListener('change', () => registerExperiment());
-
-function chaosRank(n) {
-  if (n === 0)  return 'Nenhum experimento ainda';
-  if (n < 5)    return '🧪 Aprendiz de laboratório';
-  if (n < 15)   return '⚗️ Cientista curioso';
-  if (n < 30)   return '🔬 Pesquisador dedicado';
-  if (n < 60)   return '🌪️ Mestre do caos controlado';
-  return '💥 Lenda da termodinâmica afetiva';
-}
-function registerExperiment() {
-  experimentsCount++;
-  chaosValueEl.textContent = experimentsCount;
-  chaosStateEl.textContent = chaosRank(experimentsCount);
-  chaosValueEl.classList.remove('pop');
-  void chaosValueEl.offsetWidth;
-  chaosValueEl.classList.add('pop');
-}
-document.getElementById('btnRegister').addEventListener('click', registerExperiment);
-
-const ENTROPY_GRID = 12;
-function computeEntropy() {
-  const N = particles.length;
-  if (N === 0) return 0;
-  const cells = new Array(ENTROPY_GRID * ENTROPY_GRID).fill(0);
-  const cw = W / ENTROPY_GRID, ch = H / ENTROPY_GRID;
-  for (const p of particles) {
-    let gx = Math.floor(p.x / cw), gy = Math.floor(p.y / ch);
-    if (gx < 0) gx = 0; else if (gx >= ENTROPY_GRID) gx = ENTROPY_GRID - 1;
-    if (gy < 0) gy = 0; else if (gy >= ENTROPY_GRID) gy = ENTROPY_GRID - 1;
-    cells[gy * ENTROPY_GRID + gx]++;
-  }
-  let S = 0;
-  for (const c of cells) { if (c > 0) { const p = c / N; S -= p * Math.log(p); } }
-  const maxCells = Math.min(N, ENTROPY_GRID * ENTROPY_GRID);
-  const maxS = Math.log(maxCells);
-  return maxS > 0 ? S / maxS : 0;
-}
-function entropyLabel(s) {
-  if (s < 0.15) return '❄️ Cristal perfeito';
-  if (s < 0.32) return '🔷 Ordem emergente';
-  if (s < 0.50) return '🌊 Fluido em trânsito';
-  if (s < 0.70) return '🔥 Equilíbrio térmico';
-  if (s < 0.88) return '🌪️ Difusão caótica';
-  return '💥 Caos máximo';
-}
-setInterval(() => {
-  currentEntropy = computeEntropy();
-  entropyValueEl.textContent = currentEntropy.toFixed(3);
-  entropyFillEl.style.width = (currentEntropy * 100).toFixed(1) + '%';
-  entropyStateEl.textContent = entropyLabel(currentEntropy);
-}, 160);
-
-document.getElementById('btnClear').addEventListener('click', registerExperiment);
-document.getElementById('btnOnline').addEventListener('click', registerExperiment);
-canvas.addEventListener('pointerdown', registerExperiment);
-
-labToggle.addEventListener('click', () => labPanel.classList.remove('open'));
-document.getElementById('btnLab').addEventListener('click', () => labPanel.classList.toggle('open'));
-
-// celular deitado: esconde as opções por padrão para sobrar tela (☰ mostra de novo)
-const landscapeMQ = window.matchMedia('(max-height: 500px)');
-function autoCollapseControls() {
-  if (!landscapeMQ.matches) return;
-  controlsBar.classList.add('collapsed');
-  btnToggleControls.textContent = '☰';
-  btnToggleControls.title = 'Mostrar controles';
-}
-autoCollapseControls();
-landscapeMQ.addEventListener('change', autoCollapseControls);
-
-applyTemperature(BASE_TEMPERATURE);
-chaosStateEl.textContent = chaosRank(0);
+$('#hintBtn').onclick=doHint;addEventListener('keydown',e=>{if(e.key=='h'||e.key=='H')doHint()});
+Object.entries(LAT).forEach(([id,l])=>{const b=document.createElement('button');b.textContent=l.name;b.dataset.id=id;b.onclick=()=>{lid=id;document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x.dataset.id==id));state='menu';newGame();showOv('SPIN GLITCH',intro(),'Jogar')};$('#tabs').appendChild(b)});
+function intro(){return `<p>Clique num spin para inverter. Complete uma face e ela é apagada em glitch:</p><p><b class="u">FM</b>: todos os spins da face iguais.<br><b style="color:${AC}">AFM</b>: alternando ↑↓ em volta da face (só faces com número par de spins, vale o dobro).</p><p>A entropia sobe sozinha e o ruído térmico inverte spins aleatórios. Limpe faces para baixá-la. Combos multiplicam os pontos. Tecla H pede uma dica.</p>`}
+new ResizeObserver(layout).observe(stage);
+document.querySelector('nav button').click();requestAnimationFrame(tick);
 </script>
 </body>
 </html>
